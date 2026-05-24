@@ -1,0 +1,136 @@
+<div id="page-kpi" class="page hidden">
+
+  <header class="topbar">
+    <div>
+      <h1>KPI</h1>
+      <p class="subtitle">
+        <span id="kpi-meta-source">loading…</span>
+        <span class="dot"></span>
+        <span id="kpi-meta-generated"></span>
+      </p>
+    </div>
+  </header>
+
+  <section class="home-scroll">
+    <section class="filterbar embedded">
+      <div class="filterbar-row">
+        <div class="filter-group">
+          <label>Period
+            <select id="kpi-period">
+              <option value="30d">Last 30 days</option>
+              <option value="quarter">Last quarter</option>
+              <option value="1y" selected>Last 1 year</option>
+              <option value="3y">Last 3 years</option>
+              <option value="5y">Last 5 years</option>
+              <option value="all">All time</option>
+              <option value="custom">Custom</option>
+            </select>
+          </label>
+          <label>From
+            <input id="kpi-date-from" type="date" />
+          </label>
+          <label>To
+            <input id="kpi-date-to" type="date" />
+          </label>
+          <button id="kpi-global-reset" type="button">Reset</button>
+        </div>
+      </div>
+      <div class="list-meta">
+        <div class="record-count" id="kpi-range-label">—</div>
+      </div>
+    </section>
+
+    <div class="insight-grid kpi-card-grid" id="kpi-summary"></div>
+
+    <section class="filterbar embedded kpi-config-panel">
+      <div class="filterbar-row">
+        <div>
+          <div class="record-count" id="kpi-config-title">Customer Concentration</div>
+          <div class="range-anchor" id="kpi-config-help">Configure the selected KPI.</div>
+        </div>
+        <div class="filter-group" id="kpi-config-fields"></div>
+        <button id="kpi-config-reset" type="button">Reset KPI</button>
+      </div>
+    </section>
+
+    <div class="dashboard-grid" data-kpi-detail="concentration">
+      <section class="dashboard-panel full-width">
+        <div class="panel-head">
+          <h2>Revenue Concentration</h2>
+          <div class="chart-controls">
+            <label>Show
+              <select id="kpi-concentration-topn">
+                <option value="5">Top 5</option>
+                <option value="10" selected>Top 10</option>
+                <option value="20">Top 20</option>
+                <option value="50">Top 50</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <div class="chart-box products-chart-box"><canvas id="kpi-concentration-chart"></canvas></div>
+      </section>
+    </div>
+
+    <div class="products-table-card kpi-table-card" data-kpi-detail="concentration">
+      <div class="panel-head kpi-table-head">
+        <h2>Top Customers by Revenue</h2>
+        <span id="kpi-concentration-table-note">—</span>
+      </div>
+      <div class="kpi-table-card-body">
+        <div class="aggregate-table kpi-table-wrap" id="kpi-concentration-table"></div>
+      </div>
+    </div>
+
+    <div class="dashboard-grid hidden" data-kpi-detail="repeat">
+      <section class="dashboard-panel full-width">
+        <div class="panel-head">
+          <h2>Repeat Purchase Rate</h2>
+          <span id="kpi-repeat-note">—</span>
+        </div>
+        <div class="chart-box products-chart-box"><canvas id="kpi-repeat-chart"></canvas></div>
+      </section>
+    </div>
+
+    <div class="products-table-card kpi-table-card hidden" data-kpi-detail="repeat">
+      <div class="panel-head kpi-table-head">
+        <h2>Repeat Customers</h2>
+        <span id="kpi-repeat-table-note">—</span>
+      </div>
+      <div class="kpi-table-card-body">
+        <div class="aggregate-table kpi-table-wrap" id="kpi-repeat-table"></div>
+      </div>
+    </div>
+
+    <div class="products-table-card kpi-table-card hidden" data-kpi-detail="cohort">
+      <div class="panel-head kpi-table-head">
+        <h2>Cohort Retention</h2>
+        <span id="kpi-cohort-note">—</span>
+      </div>
+      <div class="kpi-table-card-body">
+        <div class="aggregate-table kpi-table-wrap" id="kpi-cohort-table"></div>
+      </div>
+    </div>
+
+    <div class="products-table-card kpi-table-card hidden" data-kpi-detail="dormant">
+      <div class="panel-head kpi-table-head">
+        <h2>Dormant Customers</h2>
+        <span id="kpi-dormant-note">—</span>
+      </div>
+      <div class="kpi-table-card-body">
+        <div class="aggregate-table kpi-table-wrap" id="kpi-dormant-table"></div>
+      </div>
+    </div>
+
+    <div class="products-table-card kpi-table-card hidden" data-kpi-detail="cadence">
+      <div class="panel-head kpi-table-head">
+        <h2>Average Days Between Orders</h2>
+        <span id="kpi-cadence-note">—</span>
+      </div>
+      <div class="kpi-table-card-body">
+        <div class="aggregate-table kpi-table-wrap" id="kpi-cadence-table"></div>
+      </div>
+    </div>
+  </section>
+
+</div>

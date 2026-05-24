@@ -1,0 +1,81 @@
+<div id="page-home" class="page">
+
+  <header class="topbar">
+    <div>
+      <h1>Dashboard</h1>
+      <p class="subtitle">
+        <span id="meta-source">loading…</span>
+        <span class="dot"></span>
+        <span id="meta-generated"></span>
+      </p>
+    </div>
+    <div class="topbar-right">
+      <div class="totals" id="totals"></div>
+      <input type="file" id="upload-input" accept=".xlsx,.xls" hidden />
+      <button id="upload-btn" class="upload-btn" type="button" title="Upload an Excel sales register">
+        <span class="upload-icon">&uarr;</span> Upload Excel
+      </button>
+    </div>
+  </header>
+
+  <section class="home-scroll">
+    <div class="range-bar" id="home-range-bar">
+      <button class="range-btn" type="button" data-range="7d">7 Days</button>
+      <button class="range-btn" type="button" data-range="lastmonth">Last Month</button>
+      <button class="range-btn" type="button" data-range="quarter">Quarter</button>
+      <button class="range-btn active" type="button" data-range="1y">1 Year</button>
+      <button class="range-btn" type="button" data-range="3y">3 Years</button>
+      <button class="range-btn" type="button" data-range="5y">5 Years</button>
+      <span class="range-anchor" id="range-anchor"></span>
+    </div>
+    <div class="insight-grid" id="insight-grid"></div>
+    <div class="dashboard-grid">
+      <section class="dashboard-panel wide">
+        <div class="panel-head">
+          <h2 id="trend-title">Gross Sales</h2>
+          <span id="trend-range">—</span>
+        </div>
+        <div class="chart-box"><canvas id="daily-chart"></canvas></div>
+      </section>
+      <section class="dashboard-panel">
+        <div class="panel-head">
+          <h2>Sale Type</h2>
+        </div>
+        <div class="chart-box"><canvas id="sale-type-chart"></canvas></div>
+      </section>
+      <section class="dashboard-panel wide">
+        <div class="panel-head">
+          <h2>Cumulative Sales</h2>
+          <span id="cumulative-range">—</span>
+        </div>
+        <div class="chart-box"><canvas id="cumulative-chart"></canvas></div>
+      </section>
+      <section class="dashboard-panel">
+        <div class="panel-head">
+          <h2>Top Customers</h2>
+        </div>
+        <div id="customer-insights" class="rank-list"></div>
+      </section>
+      <section class="dashboard-panel wide">
+        <div class="panel-head">
+          <h2>Domestic & Export Aggregate</h2>
+        </div>
+        <div id="sale-aggregate" class="aggregate-table"></div>
+      </section>
+      <section class="dashboard-panel">
+        <div class="panel-head">
+          <h2>Last 7 Days Gross</h2>
+          <span id="last-7-days-range">—</span>
+        </div>
+        <div id="last-7-days-gross" class="aggregate-table"></div>
+      </section>
+      <section class="dashboard-panel">
+        <div class="panel-head">
+          <h2>Dispatch Location</h2>
+        </div>
+        <div id="location-insights" class="rank-list"></div>
+      </section>
+    </div>
+  </section>
+
+</div>

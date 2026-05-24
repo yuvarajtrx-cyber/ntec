@@ -1,0 +1,122 @@
+<div id="page-products" class="page hidden">
+
+  <header class="topbar">
+    <div>
+      <h1>Products</h1>
+      <p class="subtitle">
+        <span id="products-meta-source">loading…</span>
+        <span class="dot"></span>
+        <span id="products-meta-generated"></span>
+      </p>
+    </div>
+    <div class="topbar-right">
+      <div class="totals" id="products-totals"></div>
+    </div>
+  </header>
+
+  <section class="home-scroll">
+    <div class="insight-grid" id="products-insight-grid"></div>
+    <div class="dashboard-grid">
+      <section class="dashboard-panel full-width">
+        <div class="panel-head">
+          <h2 id="products-chart-title">Product Chart</h2>
+          <div class="chart-controls">
+            <label>Type
+              <select id="products-chart-type">
+                <option value="bar-h" selected>Bar (horizontal)</option>
+                <option value="bar-v">Bar (vertical)</option>
+                <option value="line">Line</option>
+                <option value="doughnut">Doughnut</option>
+              </select>
+            </label>
+            <label>Measure
+              <select id="products-chart-measure">
+                <option value="value" selected>Total Value</option>
+                <option value="quantity">Quantity</option>
+                <option value="avgRate">Avg Rate</option>
+                <option value="invoices">Invoices</option>
+                <option value="customers">Customers</option>
+              </select>
+            </label>
+            <label>Show
+              <select id="products-chart-topn">
+                <option value="5">Top 5</option>
+                <option value="10" selected>Top 10</option>
+                <option value="20">Top 20</option>
+                <option value="50">Top 50</option>
+                <option value="all">All</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <div class="chart-box products-chart-box"><canvas id="products-chart"></canvas></div>
+      </section>
+    </div>
+
+    <section class="filterbar embedded">
+      <div class="filterbar-row">
+        <div class="search-wide">
+          <input id="products-search" type="search" placeholder="Search product name…" autocomplete="off" />
+        </div>
+        <div class="filter-group">
+          <label>Sort
+            <select id="products-sort">
+              <option value="value-desc">Value — highest first</option>
+              <option value="value-asc">Value — lowest first</option>
+              <option value="qty-desc">Quantity — highest first</option>
+              <option value="qty-asc">Quantity — lowest first</option>
+              <option value="invoices-desc">Invoices — most first</option>
+              <option value="name-asc">Product A–Z</option>
+              <option value="name-desc">Product Z–A</option>
+            </select>
+          </label>
+          <label>Sale Type
+            <select id="products-filter-category"><option value="">All</option></select>
+          </label>
+          <label>Month
+            <select id="products-filter-month"><option value="">All</option></select>
+          </label>
+          <label>Customer
+            <select id="products-filter-customer"><option value="">All</option></select>
+          </label>
+          <button id="products-reset" type="button">Reset</button>
+        </div>
+      </div>
+      <div class="list-meta">
+        <div class="record-count" id="products-count">—</div>
+        <div class="pager" id="products-pager">
+          <label>Rows
+            <select id="products-page-size">
+              <option value="10">10</option>
+              <option value="25" selected>25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+              <option value="all">All</option>
+            </select>
+          </label>
+          <button id="products-page-prev" type="button">Prev</button>
+          <span id="products-page-status">Page 1 of 1</span>
+          <button id="products-page-next" type="button">Next</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="products-table-card">
+      <table class="txn-list" id="products-table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th class="num">Qty</th>
+            <th class="num">Avg Rate</th>
+            <th class="num">Total Value</th>
+            <th class="num">Invoices</th>
+            <th class="num">Customers</th>
+            <th>Last Sold</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+</div>

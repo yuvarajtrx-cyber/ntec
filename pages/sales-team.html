@@ -1,0 +1,69 @@
+<div id="page-sales-team" class="page hidden">
+
+  <header class="topbar">
+    <div>
+      <h1>Sales Team</h1>
+      <p class="subtitle">
+        <span id="sales-team-meta-source">loading…</span>
+        <span class="dot"></span>
+        <span id="sales-team-meta-count">—</span>
+      </p>
+    </div>
+    <div class="topbar-right">
+      <input type="file" id="sp-upload-input" accept=".xlsx,.xls" hidden />
+      <button id="sp-upload-btn" class="upload-btn" type="button"
+              title="Upload customer → salesperson mapping (full replace)">
+        <span class="upload-icon">&uarr;</span> Upload Salesperson Map
+      </button>
+    </div>
+  </header>
+
+  <section class="sales-team-scroll">
+
+    <nav class="sales-team-crumbs" id="sales-team-crumbs"></nav>
+
+    <div class="analysis-controls">
+      <label>Sale Type
+        <select id="st-sale-group">
+          <option value="">All</option>
+          <option value="domestic">Domestic</option>
+          <option value="export">Export</option>
+        </select>
+      </label>
+      <label>Material
+        <select id="st-material">
+          <option value="">All</option>
+          <option value="fg">Finished Goods</option>
+          <option value="rm">Raw Material</option>
+        </select>
+      </label>
+      <label>Month
+        <select id="st-month"><option value="">All</option></select>
+      </label>
+      <label>From
+        <input id="st-date-from" type="date" />
+      </label>
+      <label>To
+        <input id="st-date-to" type="date" />
+      </label>
+      <label>Search
+        <input id="st-q" type="search" placeholder="contains..." />
+      </label>
+      <button id="st-reset" type="button">Reset</button>
+    </div>
+
+    <div class="insight-grid" id="st-kpi-strip"></div>
+
+    <section class="dashboard-panel">
+      <div class="panel-head">
+        <h2 id="st-panel-title">Sales Team</h2>
+        <span id="st-panel-count">—</span>
+      </div>
+      <div class="pivot-table-wrap">
+        <table class="pivot-table" id="st-table"></table>
+      </div>
+    </section>
+
+  </section>
+
+</div>

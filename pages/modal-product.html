@@ -1,0 +1,52 @@
+<div id="product-drilldown" class="modal hidden" aria-hidden="true">
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="drilldown-title">
+    <header class="modal-head">
+      <div>
+        <small class="modal-eyebrow">Product</small>
+        <h2 id="drilldown-title">—</h2>
+        <p class="modal-sub" id="drilldown-summary"></p>
+      </div>
+      <button type="button" class="modal-close" data-close aria-label="Close">×</button>
+    </header>
+    <div class="modal-controls filter-group">
+      <label>Search
+        <input id="drilldown-search" type="search" placeholder="Customer name…" />
+      </label>
+      <label>Sort
+        <select id="drilldown-sort">
+          <option value="value-desc">Value — highest first</option>
+          <option value="value-asc">Value — lowest first</option>
+          <option value="qty-desc">Quantity — highest first</option>
+          <option value="qty-asc">Quantity — lowest first</option>
+          <option value="invoices-desc">Invoices — most first</option>
+          <option value="recent">Most recent first</option>
+          <option value="name-asc">Customer A–Z</option>
+        </select>
+      </label>
+      <label>Month
+        <select id="drilldown-month"><option value="">All</option></select>
+      </label>
+      <label>Sale Type
+        <select id="drilldown-category"><option value="">All</option></select>
+      </label>
+      <button id="drilldown-reset" type="button">Reset</button>
+    </div>
+    <div class="modal-body">
+      <table class="txn-list" id="drilldown-table">
+        <thead>
+          <tr>
+            <th>Customer</th>
+            <th>GSTIN</th>
+            <th class="num">Qty</th>
+            <th class="num">Avg Rate</th>
+            <th class="num">Total Value</th>
+            <th class="num">Invoices</th>
+            <th>Last Bought</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,100 @@
+<div id="page-analysis" class="page hidden">
+
+  <header class="topbar">
+    <div>
+      <h1>Analysis</h1>
+      <p class="subtitle">
+        <span id="analysis-meta-source">loading…</span>
+        <span class="dot"></span>
+        <span id="analysis-meta-generated"></span>
+      </p>
+    </div>
+  </header>
+
+  <section class="analysis-scroll">
+    <div class="analysis-controls">
+      <label>Group by
+        <select id="analysis-dim">
+          <option value="category">Sale Type</option>
+          <option value="location">Location</option>
+          <option value="particulars">Customer</option>
+          <option value="voucher_type">Voucher Type</option>
+          <option value="voucher_date">Date</option>
+          <option value="month">Month</option>
+          <option value="gstin_uin">GSTIN/UIN</option>
+        </select>
+      </label>
+      <label>Measure
+        <select id="analysis-measure">
+          <option value="gross_sum">Gross Sales</option>
+          <option value="taxable_sum">Taxable Value</option>
+          <option value="gst_sum">GST</option>
+          <option value="qty_sum">Quantity</option>
+          <option value="count">Record Count</option>
+          <option value="gross_avg">Avg Gross</option>
+        </select>
+      </label>
+      <label>Chart
+        <select id="analysis-chart-type">
+          <option value="bar">Bar</option>
+          <option value="line">Line</option>
+          <option value="doughnut">Doughnut</option>
+        </select>
+      </label>
+      <label>Sort
+        <select id="analysis-sort">
+          <option value="value-desc">Value high to low</option>
+          <option value="value-asc">Value low to high</option>
+          <option value="key-asc">Name A-Z</option>
+          <option value="key-desc">Name Z-A</option>
+        </select>
+      </label>
+      <label>Top
+        <input id="analysis-topn" type="number" min="1" max="500" value="20" />
+      </label>
+      <label>Search Result
+        <input id="analysis-q" type="search" placeholder="contains..." />
+      </label>
+      <label>Sale Type
+        <select id="analysis-category"><option value="">All</option></select>
+      </label>
+      <label>Location
+        <select id="analysis-location"><option value="">All</option></select>
+      </label>
+      <label>Month
+        <select id="analysis-month"><option value="">All</option></select>
+      </label>
+      <label>From
+        <input id="analysis-date-from" type="date" />
+      </label>
+      <label>To
+        <input id="analysis-date-to" type="date" />
+      </label>
+      <label>Product
+        <select id="analysis-product"><option value="">All</option></select>
+      </label>
+      <button id="analysis-reset" type="button">Reset</button>
+    </div>
+
+    <div class="analysis-summary" id="analysis-summary"></div>
+
+    <div class="analysis-grid">
+      <section class="dashboard-panel">
+        <div class="panel-head">
+          <h2 id="analysis-chart-title">Pivot Chart</h2>
+        </div>
+        <div class="chart-box analysis-chart-box"><canvas id="analysis-chart"></canvas></div>
+      </section>
+      <section class="dashboard-panel">
+        <div class="panel-head">
+          <h2>Pivot Table</h2>
+          <span id="analysis-count">—</span>
+        </div>
+        <div class="pivot-table-wrap">
+          <table class="pivot-table" id="analysis-table"></table>
+        </div>
+      </section>
+    </div>
+  </section>
+
+</div>

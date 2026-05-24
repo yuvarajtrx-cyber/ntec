@@ -1,0 +1,86 @@
+<div id="page-browse" class="page hidden">
+
+  <header class="topbar">
+    <div>
+      <h1>Records List</h1>
+      <p class="subtitle">
+        <span id="records-meta-source">loading…</span>
+        <span class="dot"></span>
+        <span id="records-meta-generated"></span>
+      </p>
+    </div>
+  </header>
+
+  <section class="filterbar">
+    <div class="filterbar-row">
+      <div class="search-wide">
+        <input id="search" type="search" placeholder="Search customer, voucher no, GSTIN, type…" autocomplete="off" />
+      </div>
+      <div class="filter-group">
+        <label>Sort
+          <select id="sort">
+            <option value="date-desc">Date — newest first</option>
+            <option value="date-asc">Date — oldest first</option>
+            <option value="gross-desc">Gross — highest first</option>
+            <option value="gross-asc">Gross — lowest first</option>
+            <option value="customer-asc">Customer A–Z</option>
+            <option value="customer-desc">Customer Z–A</option>
+          </select>
+        </label>
+        <label>Sale Type
+          <select id="filter-category"><option value="">All</option></select>
+        </label>
+        <label>Location
+          <select id="filter-location"><option value="">All</option></select>
+        </label>
+        <label>Voucher type
+          <select id="filter-vtype"><option value="">All</option></select>
+        </label>
+        <label>Month
+          <select id="filter-month"><option value="">All</option></select>
+        </label>
+        <label>Day
+          <input id="filter-day" type="date" />
+        </label>
+        <button id="reset" type="button">Reset</button>
+      </div>
+    </div>
+    <div class="list-meta">
+      <div class="record-count" id="record-count">—</div>
+      <div class="pager" id="pager">
+        <label>Rows
+          <select id="page-size">
+            <option value="10">10</option>
+            <option value="25" selected>25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </label>
+        <button id="page-prev" type="button">Prev</button>
+        <span id="page-status">Page 1 of 1</span>
+        <button id="page-next" type="button">Next</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="records-table-scroll">
+    <table class="txn-list" id="txn-list">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Voucher No.</th>
+          <th>Customer</th>
+          <th>Type</th>
+          <th>Sale Type</th>
+          <th>Location</th>
+          <th>GSTIN</th>
+          <th class="num">Quantity</th>
+          <th class="num">Taxable</th>
+          <th class="num">Gross</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+</div>

@@ -1,0 +1,46 @@
+<div id="pivot-drilldown" class="modal hidden" aria-hidden="true">
+  <div class="modal-backdrop" data-pivot-close></div>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="pivot-drilldown-title">
+    <header class="modal-head">
+      <div>
+        <small class="modal-eyebrow" id="pivot-drilldown-eyebrow">Dimension</small>
+        <h2 id="pivot-drilldown-title">—</h2>
+        <p class="modal-sub" id="pivot-drilldown-summary"></p>
+      </div>
+      <button type="button" class="modal-close" data-pivot-close aria-label="Close">×</button>
+    </header>
+    <div class="modal-controls filter-group">
+      <label>Search
+        <input id="pivot-drilldown-search" type="search" placeholder="Voucher / customer / GSTIN…" />
+      </label>
+      <label>Sort
+        <select id="pivot-drilldown-sort">
+          <option value="gross-desc">Gross — highest first</option>
+          <option value="gross-asc">Gross — lowest first</option>
+          <option value="date-desc">Date — newest first</option>
+          <option value="date-asc">Date — oldest first</option>
+          <option value="customer-asc">Customer A–Z</option>
+        </select>
+      </label>
+      <button id="pivot-drilldown-reset" type="button">Reset</button>
+    </div>
+    <div class="modal-body">
+      <table class="txn-list" id="pivot-drilldown-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Voucher No.</th>
+            <th>Customer</th>
+            <th>Sale Type</th>
+            <th>Location</th>
+            <th>GSTIN</th>
+            <th class="num">Quantity</th>
+            <th class="num">Taxable</th>
+            <th class="num">Gross</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>

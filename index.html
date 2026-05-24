@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GST Sales Register</title>
+<link rel="stylesheet" href="style.css" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<div class="app-shell sidebar-collapsed">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">G</div>
+      <div class="brand-copy">
+      </div>
+      <button id="sidebar-toggle" class="sidebar-toggle" type="button" title="Collapse menu">☰</button>
+    </div>
+    <nav class="side-nav">
+      <button class="nav-link active" type="button" data-view="home" data-icon="⌂">Home</button>
+      <button class="nav-link" type="button" data-view="analysis" data-icon="◫">Analysis</button>
+      <button class="nav-link" type="button" data-view="kpi" data-icon="K">KPI</button>
+      <button class="nav-link" type="button" data-view="products" data-icon="▦">Products</button>
+      <button class="nav-link" type="button" data-view="sales-team" data-icon="◉">Sales Team</button>
+      <button class="nav-link" type="button" data-view="records" data-icon="☷">Records List</button>
+    </nav>
+  </aside>
+
+  <main class="main-shell"></main>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<div id="modal-slot"></div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
