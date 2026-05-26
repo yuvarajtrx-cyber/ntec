@@ -1,0 +1,262 @@
+.admin-scroll {
+  height: calc(100% - 69px);
+  overflow: auto;
+  padding: 18px 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.admin-summary-card {
+  min-height: 74px;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  padding: 14px 16px;
+  cursor: pointer;
+}
+
+.admin-summary-card span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.admin-summary-card strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--text);
+  font-size: 24px;
+  line-height: 1;
+}
+
+.admin-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-tab {
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--muted);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.admin-tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.admin-panel {
+  display: grid;
+  grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.admin-panel-single {
+  grid-template-columns: 1fr;
+}
+
+.admin-form,
+.admin-table-wrap {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.admin-form {
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+  box-shadow: var(--shadow);
+}
+
+.admin-form-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+}
+
+.admin-form-head span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.admin-form-head strong {
+  display: block;
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.admin-form label,
+.admin-form legend {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.admin-form input,
+.admin-form select {
+  width: 100%;
+  margin-top: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 10px;
+  font: inherit;
+  color: var(--text);
+  background: #fff;
+}
+
+.admin-inline-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.admin-form fieldset {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  margin: 0;
+}
+
+.check-grid {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.permission-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.permission-group {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.permission-group strong {
+  font-size: 12px;
+  color: var(--text);
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.check-row input {
+  width: auto;
+  margin: 0;
+}
+
+.admin-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-actions button,
+.admin-row-btn,
+.admin-small-btn,
+.admin-link-btn {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--text);
+  padding: 8px 11px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.admin-actions button[type="submit"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.admin-small-btn {
+  margin-top: 6px;
+  height: 39px;
+}
+
+.admin-link-btn {
+  width: fit-content;
+  background: var(--accent-soft);
+  border-color: var(--accent-soft);
+  color: var(--accent);
+  padding: 7px 10px;
+}
+
+.admin-next-btn {
+  margin-left: auto;
+}
+
+.admin-table-wrap {
+  overflow: auto;
+  box-shadow: var(--shadow);
+}
+
+.admin-status {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 3px 8px;
+  background: #eef2ff;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-status.inactive {
+  background: #f3f4f6;
+  color: var(--muted);
+}
+
+.admin-locked {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+@media (max-width: 980px) {
+  .admin-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-panel {
+    grid-template-columns: 1fr;
+  }
+}

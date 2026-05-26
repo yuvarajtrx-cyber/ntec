@@ -1,0 +1,92 @@
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 28px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.topbar h1 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+.subtitle {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.dot { width: 3px; height: 3px; background: var(--muted); border-radius: 50%; }
+
+.topbar-right { display: flex; align-items: center; gap: 22px; }
+.totals { display: flex; gap: 22px; font-size: 12px; color: var(--muted); }
+.totals .t-value {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.totals .t-label {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent);
+  color: #fff;
+  border: 1px solid var(--accent);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.08s ease, transform 0.05s ease;
+}
+.upload-btn:hover  { background: #4338ca; border-color: #4338ca; }
+.upload-btn:active { transform: scale(0.98); }
+.upload-btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+  background: var(--muted);
+  border-color: var(--muted);
+}
+.upload-icon {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  text-align: center;
+  line-height: 16px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  padding: 12px 18px;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+  font-size: 13px;
+  color: var(--text);
+  z-index: 100;
+  min-width: 260px;
+  max-width: 420px;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.toast.hidden { display: none; }
+.toast.success { border-left-color: var(--green); }
+.toast.error   { border-left-color: var(--red); color: var(--red); }
+.toast .toast-title { font-weight: 600; margin-bottom: 2px; }
+.toast .toast-detail { font-size: 12px; color: var(--muted); }
+.toast.success .toast-detail,
+.toast.error .toast-detail { color: inherit; opacity: 0.8; }

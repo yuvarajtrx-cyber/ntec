@@ -1,0 +1,160 @@
+<div id="page-admin" class="page hidden">
+  <header class="topbar">
+    <div>
+      <h1>Admin</h1>
+      <p class="subtitle">
+        <span id="admin-meta-user">loading...</span>
+        <span class="dot"></span>
+        <span id="admin-meta-role">Access control</span>
+      </p>
+    </div>
+  </header>
+
+  <section class="admin-scroll">
+    <div class="admin-summary">
+      <button class="admin-summary-card" type="button" data-admin-jump="departments">
+        <span>Departments</span>
+        <strong id="admin-department-count">0</strong>
+      </button>
+      <button class="admin-summary-card" type="button" data-admin-jump="roles">
+        <span>Roles</span>
+        <strong id="admin-role-count">0</strong>
+      </button>
+      <button class="admin-summary-card" type="button" data-admin-jump="users">
+        <span>Users</span>
+        <strong id="admin-user-count">0</strong>
+      </button>
+    </div>
+
+    <div class="admin-tabs">
+      <button class="admin-tab active" type="button" data-admin-tab="users">Users</button>
+      <button class="admin-tab" type="button" data-admin-tab="roles">Roles & Access</button>
+      <button class="admin-tab" type="button" data-admin-tab="departments">Departments</button>
+      <button class="admin-tab" type="button" data-admin-tab="audit">Audit Log</button>
+    </div>
+
+    <div class="admin-panel" data-admin-panel="users">
+      <form id="admin-user-form" class="admin-form">
+        <div class="admin-form-head">
+          <div>
+            <span>User</span>
+            <strong id="admin-user-form-title">Create User</strong>
+          </div>
+        </div>
+        <input type="hidden" id="admin-user-id" />
+        <label>Username <input id="admin-user-username" autocomplete="off" required placeholder="e.g. priya" /></label>
+        <label>Display Name <input id="admin-user-display" autocomplete="off" placeholder="e.g. Priya Raman" /></label>
+        <label>Password <input id="admin-user-password" type="password" autocomplete="new-password" placeholder="Required for new users" /></label>
+        <label>Department
+          <div class="admin-inline-field">
+            <select id="admin-user-department"></select>
+            <button class="admin-small-btn" type="button" data-admin-jump="departments">Manage</button>
+          </div>
+        </label>
+        <label>Status
+          <select id="admin-user-active">
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </label>
+        <fieldset>
+          <legend>Roles</legend>
+          <div id="admin-user-roles" class="check-grid"></div>
+          <button class="admin-link-btn" type="button" data-admin-jump="roles">Create or edit roles</button>
+        </fieldset>
+        <div class="admin-actions">
+          <button type="submit">Save User</button>
+          <button id="admin-user-reset" type="button">New User</button>
+        </div>
+      </form>
+      <div class="admin-table-wrap">
+        <table class="txn-list" id="admin-users-table">
+          <thead>
+            <tr><th>User</th><th>Department</th><th>Roles</th><th>Status</th><th></th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="admin-panel hidden" data-admin-panel="roles">
+      <form id="admin-role-form" class="admin-form">
+        <div class="admin-form-head">
+          <div>
+            <span>Role</span>
+            <strong id="admin-role-form-title">Create Role</strong>
+          </div>
+        </div>
+        <input type="hidden" id="admin-role-id" />
+        <label>Name <input id="admin-role-name" autocomplete="off" required placeholder="e.g. Sales Viewer" /></label>
+        <label>Description <input id="admin-role-description" autocomplete="off" placeholder="Short note for admins" /></label>
+        <label>Status
+          <select id="admin-role-active">
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </label>
+        <fieldset>
+          <legend>Permissions</legend>
+          <div id="admin-role-permissions" class="check-grid permission-grid"></div>
+        </fieldset>
+        <div class="admin-actions">
+          <button type="submit">Save Role</button>
+          <button id="admin-role-reset" type="button">New Role</button>
+          <button class="admin-next-btn" type="button" data-admin-jump="users">Assign to User</button>
+        </div>
+      </form>
+      <div class="admin-table-wrap">
+        <table class="txn-list" id="admin-roles-table">
+          <thead>
+            <tr><th>Role</th><th>Permissions</th><th>Status</th><th></th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="admin-panel hidden" data-admin-panel="departments">
+      <form id="admin-department-form" class="admin-form compact-form">
+        <div class="admin-form-head">
+          <div>
+            <span>Department</span>
+            <strong id="admin-department-form-title">Create Department</strong>
+          </div>
+        </div>
+        <input type="hidden" id="admin-department-id" />
+        <label>Name <input id="admin-department-name" autocomplete="off" required placeholder="e.g. Sales" /></label>
+        <label>Status
+          <select id="admin-department-active">
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </label>
+        <div class="admin-actions">
+          <button type="submit">Save Department</button>
+          <button id="admin-department-reset" type="button">New Department</button>
+          <button class="admin-next-btn" type="button" data-admin-jump="roles">Next: Roles</button>
+        </div>
+      </form>
+      <div class="admin-table-wrap">
+        <table class="txn-list" id="admin-departments-table">
+          <thead>
+            <tr><th>Department</th><th>Status</th><th></th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="admin-panel admin-panel-single hidden" data-admin-panel="audit">
+      <div class="admin-table-wrap">
+        <table class="txn-list" id="admin-audit-table">
+          <thead>
+            <tr><th>Time</th><th>Actor</th><th>Action</th><th>Target</th><th>Detail</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</div>

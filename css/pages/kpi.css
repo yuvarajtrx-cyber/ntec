@@ -1,0 +1,41 @@
+.kpi-card-grid { margin-bottom: 16px; }
+.kpi-card {
+  text-align: left; font-family: inherit; cursor: pointer;
+}
+.kpi-card.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft), var(--shadow);
+}
+.kpi-config-panel .filterbar-row {
+  align-items: flex-end;
+  justify-content: space-between;
+}
+.kpi-config-panel .range-anchor {
+  display: block;
+  margin: 3px 0 0;
+}
+.kpi-config-panel button {
+  height: 35px;
+}
+.kpi-table-card {
+  margin-top: 14px;
+}
+.kpi-table-head {
+  padding: 16px 18px 0;
+  margin-bottom: 12px;
+}
+.kpi-table-card-body {
+  padding: 0 0 4px;
+}
+.kpi-table-wrap {
+  max-height: 380px;
+  overflow: auto;
+}
+.kpi-table-wrap td:first-child {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (max-width: 900px) {
+  .kpi-config-panel .filterbar-row { align-items: stretch; }
+}

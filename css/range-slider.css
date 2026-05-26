@@ -1,0 +1,69 @@
+.range-label .range-slider {
+  position: relative;
+  height: 24px;
+  margin: 4px 0 2px;
+}
+.range-label .range-track,
+.range-label .range-fill {
+  position: absolute;
+  top: 11px;
+  height: 2px;
+  border-radius: 2px;
+  pointer-events: none;
+}
+.range-label .range-track {
+  left: 0;
+  width: 100%;
+  background: var(--border);
+}
+.range-label .range-fill {
+  background: var(--accent);
+}
+.range-label .range-slider input[type="range"] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 24px;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: none;
+  margin: 0;
+}
+.range-label .range-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+  cursor: pointer;
+  pointer-events: auto;
+  margin-top: -6px;
+}
+.range-label .range-slider input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+  cursor: pointer;
+  pointer-events: auto;
+}
+.range-label .range-slider input[type="range"]::-webkit-slider-runnable-track,
+.range-label .range-slider input[type="range"]::-moz-range-track {
+  background: transparent;
+  border: none;
+}
+.range-label .range-values {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+  text-transform: none;
+  letter-spacing: 0;
+}

@@ -10,6 +10,43 @@ import { renderSalesTeam } from "./pages/sales-team.js";
 import { renderCustomers } from "./pages/customers.js";
 import { showConfirm } from "./confirm.js";
 
+let csrfToken = "";
+
+export async function loadSession() {
+  const res = await fetch("/api/session", { cache: "no-store" });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    window.location.href = "/login";
+    throw new Error(data.error || "Authentication required");
+  }
+  csrfToken = data.csrfToken || "";
+  state.session = data;
+  state.permissions = new Set(data.permissions || []);
+  return data;
+}
+
+export function can(permission) {
+  return state.permissions.has(permission);
+}
+
+export function canAny(permissions) {
+  return permissions.some(permission => can(permission));
+}
+
+export async function apiJson(path, options = {}) {
+  const headers = {
+    ...(options.body ? { "Content-Type": "application/json" } : {}),
+    ...(options.method && options.method !== "GET" ? { "X-CSRF-Token": csrfToken } : {}),
+    ...(options.headers || {}),
+  };
+  const res = await fetch(path, { ...options, headers, cache: "no-store" });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.error || `HTTP ${res.status}`);
+  }
+  return data;
+}
+
 export async function fetchData() {
   const res = await fetch("/api/sales", { cache: "no-store" });
   const body = await res.json().catch(() => ({}));
@@ -26,6 +63,7 @@ async function postUpload(file, mode) {
   fd.append("mode", mode);
   const res = await fetch(`/api/upload?mode=${encodeURIComponent(mode)}`, {
     method: "POST",
+    headers: { "X-CSRF-Token": csrfToken },
     body: fd,
   });
   const data = await res.json().catch(() => ({}));
@@ -120,7 +158,11 @@ export async function uploadSalespersonFile(file) {
   fd.append("file", file);
 
   try {
-    const res = await fetch("/api/upload-salespersons", { method: "POST", body: fd });
+    const res = await fetch("/api/upload-salespersons", {
+      method: "POST",
+      headers: { "X-CSRF-Token": csrfToken },
+      body: fd,
+    });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       showToast("Upload failed", data.error || `HTTP ${res.status}`, "error");

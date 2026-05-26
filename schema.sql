@@ -59,3 +59,69 @@ create table if not exists public.customer_salesperson (
 
 create index if not exists customer_salesperson_person_idx
     on public.customer_salesperson (sales_person);
+
+-- Application users, roles, departments, and permissions.
+create table if not exists public.app_department (
+    id          bigserial primary key,
+    name        text not null unique,
+    is_active   boolean not null default true,
+    created_at  timestamptz not null default now(),
+    updated_at  timestamptz not null default now()
+);
+
+create table if not exists public.app_role (
+    id          bigserial primary key,
+    name        text not null unique,
+    description text not null default '',
+    is_active   boolean not null default true,
+    created_at  timestamptz not null default now(),
+    updated_at  timestamptz not null default now()
+);
+
+create table if not exists public.app_permission (
+    key         text primary key,
+    label       text not null,
+    category    text not null,
+    created_at  timestamptz not null default now()
+);
+
+create table if not exists public.app_user (
+    id               bigserial primary key,
+    username         text not null unique,
+    password_hash    text not null,
+    display_name     text not null default '',
+    department_id    bigint references public.app_department(id) on delete set null,
+    is_active        boolean not null default true,
+    created_at       timestamptz not null default now(),
+    updated_at       timestamptz not null default now()
+);
+
+create table if not exists public.app_role_permission (
+    role_id         bigint not null references public.app_role(id) on delete cascade,
+    permission_key  text not null references public.app_permission(key) on delete cascade,
+    primary key (role_id, permission_key)
+);
+
+create table if not exists public.app_user_role (
+    user_id  bigint not null references public.app_user(id) on delete cascade,
+    role_id  bigint not null references public.app_role(id) on delete cascade,
+    primary key (user_id, role_id)
+);
+
+create index if not exists app_user_department_idx on public.app_user (department_id);
+create index if not exists app_role_permission_perm_idx on public.app_role_permission (permission_key);
+
+create table if not exists public.app_audit_log (
+    id             bigserial primary key,
+    actor_user_id  bigint references public.app_user(id) on delete set null,
+    actor_username text,
+    action         text not null,
+    target_type    text,
+    target_id      text,
+    detail         jsonb not null default '{}'::jsonb,
+    ip_address     text,
+    created_at     timestamptz not null default now()
+);
+
+create index if not exists app_audit_log_created_idx on public.app_audit_log (created_at desc);
+create index if not exists app_audit_log_action_idx on public.app_audit_log (action);

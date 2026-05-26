@@ -1,0 +1,44 @@
+.sales-team-scroll {
+  flex: 1;
+  overflow: auto;
+  padding: 18px 28px 32px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.sales-team-crumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+.sales-team-crumbs .crumb-link {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font: inherit;
+  font-weight: 600;
+}
+.sales-team-crumbs .crumb-link:hover { background: var(--accent-soft); }
+.sales-team-crumbs .crumb-sep { color: var(--muted); }
+.sales-team-crumbs .crumb-current {
+  color: var(--text);
+  font-weight: 600;
+  padding: 4px 8px;
+}
+.sales-person-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
+}
+.sales-team-charts {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.sales-team-chart-box {
+  height: 340px;
+}

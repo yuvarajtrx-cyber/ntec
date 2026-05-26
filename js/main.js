@@ -2,7 +2,7 @@ import { state } from "./state.js";
 import { populateFilter, escapeHtml } from "./format.js";
 import { uniqueSorted } from "./rows.js";
 import { setMeta, setMetaError } from "./meta.js";
-import { fetchData, uploadFile } from "./api.js";
+import { apiJson, can, fetchData, loadSession, uploadFile } from "./api.js";
 import { refreshFilterOptions, refreshProductFilterOptions } from "./filters.js";
 import { routeFromHash } from "./routing.js";
 import { renderHome, wireHome } from "./pages/home.js";
@@ -12,7 +12,9 @@ import { renderProducts, wireProducts } from "./pages/products.js";
 import { renderBrowse, wireBrowse } from "./pages/browse.js";
 import { renderSalesTeam, wireSalesTeam } from "./pages/sales-team.js";
 import { renderCustomers, wireCustomers } from "./pages/customers.js";
+import { renderAdminPage, wireAdmin } from "./pages/admin.js";
 import { wireConfirm } from "./confirm.js";
+import { showToast } from "./toast.js";
 
 // Pages must be direct children of .main-shell so the CSS height/overflow chain
 // (.main-shell → .page → .home-scroll) works. Modals are position:fixed, so
@@ -25,6 +27,7 @@ const PAGE_PARTIALS = [
   "pages/sales-team.html",
   "pages/customers.html",
   "pages/browse.html",
+  "pages/admin.html",
 ];
 const MODAL_PARTIALS = [
   "pages/modal-pivot.html",
@@ -52,6 +55,22 @@ async function fetchPartial(path) {
 }
 
 function wireShell() {
+  const navPerms = {
+    home: "page.home",
+    analysis: "page.analysis",
+    kpi: "page.kpi",
+    products: "page.products",
+    "sales-team": "page.sales_team",
+    customers: "page.customers",
+    records: "page.records",
+    admin: "admin.view",
+  };
+  document.querySelectorAll(".nav-link").forEach(btn => {
+    const permission = navPerms[btn.dataset.view];
+    if (permission && !can(permission)) btn.classList.add("hidden");
+  });
+  document.getElementById("upload-btn").classList.toggle("hidden", !can("sales.upload"));
+  document.getElementById("sp-upload-btn")?.classList.toggle("hidden", !can("salesperson_map.upload"));
   document.getElementById("sidebar-toggle").addEventListener("click", () => {
     document.querySelector(".app-shell").classList.toggle("sidebar-collapsed");
   });
@@ -65,6 +84,7 @@ function wireShell() {
         v === "products"   ? "#/products"   :
         v === "sales-team" ? "#/sales-team" :
         v === "customers"  ? "#/customers"  :
+        v === "admin"      ? "#/admin"      :
         "";
     });
   });
@@ -76,7 +96,54 @@ function wireShell() {
     if (f) uploadFile(f);
     e.target.value = "";
   });
+  document.getElementById("logout-btn").addEventListener("click", () => {
+    document.getElementById("logout-form").submit();
+  });
+  wireProfile();
   window.addEventListener("hashchange", routeFromHash);
+}
+
+function openProfile() {
+  const session = state.session || {};
+  document.getElementById("profile-username").textContent = session.username || "-";
+  document.getElementById("profile-display").textContent = session.displayName || session.username || "-";
+  document.getElementById("profile-department").textContent = session.department || "None";
+  document.getElementById("profile-roles").textContent = (session.roles || []).map(r => r.name).join(", ") || "No roles";
+  document.getElementById("profile-current-password").value = "";
+  document.getElementById("profile-new-password").value = "";
+  document.getElementById("profile-confirm-password").value = "";
+  document.getElementById("profile-modal").classList.remove("hidden");
+}
+
+function closeProfile() {
+  document.getElementById("profile-modal").classList.add("hidden");
+}
+
+function wireProfile() {
+  document.getElementById("profile-btn").addEventListener("click", openProfile);
+  document.querySelectorAll("[data-profile-close]").forEach(el => {
+    el.addEventListener("click", closeProfile);
+  });
+  document.getElementById("profile-password-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const currentPassword = document.getElementById("profile-current-password").value;
+    const newPassword = document.getElementById("profile-new-password").value;
+    const confirmPassword = document.getElementById("profile-confirm-password").value;
+    if (newPassword !== confirmPassword) {
+      showToast("Password not changed", "New password and confirmation do not match", "error");
+      return;
+    }
+    try {
+      await apiJson("/api/profile/password", {
+        method: "POST",
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      closeProfile();
+      showToast("Password changed", "Use the new password next time you sign in", "success");
+    } catch (err) {
+      showToast("Password change failed", err.message, "error");
+    }
+  });
 }
 
 function renderEmptyState(message) {
@@ -96,6 +163,7 @@ function renderEmptyState(message) {
 }
 
 async function init() {
+  await loadSession();
   await loadPartials();
 
   wireShell();
@@ -106,6 +174,7 @@ async function init() {
   wireHome();
   wireSalesTeam();
   wireCustomers();
+  wireAdmin();
   wireConfirm();
 
   let payload = null;
@@ -135,6 +204,7 @@ async function init() {
   renderBrowse();
   renderSalesTeam();
   renderCustomers();
+  if (can("admin.view")) renderAdminPage();
   routeFromHash();
 }
 

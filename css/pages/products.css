@@ -1,0 +1,48 @@
+.txn-list tr.row-clickable { cursor: pointer; }
+.txn-list tr.row-clickable:hover td { background: var(--accent-soft); }
+.txn-list tr.voucher-row.has-items { cursor: pointer; }
+.txn-list tr.voucher-row.has-items:hover td { background: var(--accent-soft); }
+
+.filterbar.embedded {
+  background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+  padding: 14px 16px; margin: 0 0 14px;
+  box-shadow: var(--shadow);
+}
+.products-table-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  overflow: hidden; box-shadow: var(--shadow);
+}
+.products-table-card table.txn-list {
+  border: none; border-radius: 0; box-shadow: none;
+}
+
+.dashboard-panel.full-width { grid-column: 1 / -1; }
+.products-chart-box { height: 380px; }
+.chart-controls {
+  display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;
+}
+.chart-controls label {
+  display: flex; flex-direction: column; gap: 4px;
+  color: var(--muted); font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
+.chart-controls select {
+  padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--card); color: var(--text); font-size: 12.5px;
+  font-family: inherit; min-width: 130px;
+}
+.chart-controls input,
+.chart-controls button {
+  padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--card); color: var(--text); font-size: 12.5px;
+  font-family: inherit; min-width: 130px;
+}
+.chart-controls button {
+  min-width: 82px; cursor: pointer; font-weight: 600;
+}
+.chart-controls button:hover,
+.kpi-config-panel button:hover {
+  background: var(--accent-soft); border-color: var(--accent); color: var(--accent);
+}
+.chart-controls select:focus,
+.chart-controls input:focus { outline: none; border-color: var(--accent); }

@@ -1,0 +1,37 @@
+@media (max-width: 1100px) {
+  .insight-grid { grid-template-columns: repeat(3, 1fr); }
+  .sales-person-card-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .dashboard-grid { grid-template-columns: 1fr; }
+  .sales-team-charts { grid-template-columns: 1fr; }
+  .analysis-controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .analysis-grid { grid-template-columns: 1fr; }
+  .analysis-summary { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 900px) {
+  .app-shell { grid-template-columns: 1fr; }
+  .sidebar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+  }
+  .brand { padding: 0; border-bottom: none; }
+  .side-nav { flex-direction: row; }
+  .main-shell { height: calc(100vh - 55px); }
+  .topbar { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .totals { flex-wrap: wrap; }
+  .filterbar-row { flex-direction: column; align-items: stretch; }
+  .filter-group { flex-wrap: wrap; }
+  .list-meta { flex-direction: column; align-items: flex-start; }
+  .analysis-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .insight-grid { grid-template-columns: 1fr; }
+  .sales-person-card-grid { grid-template-columns: 1fr; }
+  .analysis-summary { grid-template-columns: 1fr; }
+  .analysis-controls { grid-template-columns: 1fr; }
+  .analysis-scroll { padding: 18px 16px 24px; }
+  .home-scroll { padding: 18px 16px 24px; }
+  .sidebar { align-items: flex-start; flex-direction: column; }
+  .main-shell { height: calc(100vh - 112px); }
+}

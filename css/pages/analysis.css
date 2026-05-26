@@ -1,0 +1,92 @@
+.analysis-scroll {
+  flex: 1;
+  overflow: auto;
+  padding: 18px 28px 32px;
+  min-height: 0;
+}
+.analysis-controls {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(130px, 1fr));
+  gap: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+.analysis-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.analysis-controls select,
+.analysis-controls input,
+.analysis-controls button {
+  min-width: 0;
+  height: 35px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--text);
+  font-size: 13px;
+  padding: 7px 10px;
+}
+.analysis-controls button {
+  align-self: end;
+  cursor: pointer;
+  font-weight: 600;
+}
+.analysis-controls button:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.analysis-summary {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+.analysis-summary div {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 13px 14px;
+  box-shadow: var(--shadow);
+}
+.analysis-summary span {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.analysis-summary strong {
+  display: block;
+  margin-top: 5px;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.analysis-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+}
+.analysis-chart-box {
+  height: 480px;
+}
+.pivot-table-wrap {
+  max-height: 560px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.pivot-table tr.row-clickable { cursor: pointer; }
+.pivot-table tr.row-clickable:hover td { background: var(--accent-soft); }

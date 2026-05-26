@@ -3,8 +3,22 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>GST Sales Register</title>
-<link rel="stylesheet" href="style.css" />
+<title>NTEC Dashboard</title>
+<link rel="stylesheet" href="css/base.css" />
+<link rel="stylesheet" href="css/shell.css" />
+<link rel="stylesheet" href="css/topbar.css" />
+<link rel="stylesheet" href="css/filters.css" />
+<link rel="stylesheet" href="css/tables.css" />
+<link rel="stylesheet" href="css/range-slider.css" />
+<link rel="stylesheet" href="css/modals.css" />
+<link rel="stylesheet" href="css/pages/home.css" />
+<link rel="stylesheet" href="css/pages/analysis.css" />
+<link rel="stylesheet" href="css/pages/sales-team.css" />
+<link rel="stylesheet" href="css/pages/products.css" />
+<link rel="stylesheet" href="css/pages/records.css" />
+<link rel="stylesheet" href="css/pages/kpi.css" />
+<link rel="stylesheet" href="css/pages/admin.css" />
+<link rel="stylesheet" href="css/responsive.css" />
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -12,8 +26,10 @@
 <div class="app-shell sidebar-collapsed">
   <aside class="sidebar">
     <div class="brand">
-      <div class="brand-mark">G</div>
+      <div class="brand-mark">N</div>
       <div class="brand-copy">
+        <div class="brand-title">NTEC</div>
+        <div class="brand-subtitle">Sales Dashboard</div>
       </div>
       <button id="sidebar-toggle" class="sidebar-toggle" type="button" title="Collapse menu">☰</button>
     </div>
@@ -25,7 +41,12 @@
       <button class="nav-link" type="button" data-view="sales-team" data-icon="◉">Sales Team</button>
       <button class="nav-link" type="button" data-view="customers" data-icon="◈">Customers</button>
       <button class="nav-link" type="button" data-view="records" data-icon="☷">Records List</button>
+      <button class="nav-link" type="button" data-view="admin" data-icon="A">Admin</button>
     </nav>
+    <button id="profile-btn" class="profile-btn" type="button">Profile</button>
+    <form id="logout-form" class="logout-form" action="/logout" method="post">
+      <button id="logout-btn" class="logout-btn" type="button">Sign out</button>
+    </form>
   </aside>
 
   <main class="main-shell"></main>
@@ -34,6 +55,31 @@
 <div id="toast" class="toast hidden"></div>
 
 <div id="modal-slot"></div>
+
+<div id="profile-modal" class="modal hidden" role="dialog" aria-modal="true">
+  <div class="modal-backdrop" data-profile-close></div>
+  <div class="modal-card profile-card">
+    <div class="modal-head">
+      <div>
+        <span class="modal-eyebrow">Account</span>
+        <h2>Profile</h2>
+      </div>
+      <button class="modal-close" type="button" data-profile-close>&times;</button>
+    </div>
+    <div class="profile-details">
+      <div><span>Username</span><strong id="profile-username">-</strong></div>
+      <div><span>Name</span><strong id="profile-display">-</strong></div>
+      <div><span>Department</span><strong id="profile-department">-</strong></div>
+      <div><span>Roles</span><strong id="profile-roles">-</strong></div>
+    </div>
+    <form id="profile-password-form" class="profile-form">
+      <label>Current Password <input id="profile-current-password" type="password" autocomplete="current-password" required /></label>
+      <label>New Password <input id="profile-new-password" type="password" autocomplete="new-password" required minlength="8" /></label>
+      <label>Confirm New Password <input id="profile-confirm-password" type="password" autocomplete="new-password" required minlength="8" /></label>
+      <button type="submit">Change Password</button>
+    </form>
+  </div>
+</div>
 
 <script type="module" src="js/main.js"></script>
 </body>
