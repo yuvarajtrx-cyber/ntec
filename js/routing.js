@@ -4,6 +4,7 @@ import { renderKpi } from "./pages/kpi.js";
 import { renderProducts } from "./pages/products.js";
 import { renderBrowse } from "./pages/browse.js";
 import { renderSalesTeam } from "./pages/sales-team.js";
+import { renderCustomers } from "./pages/customers.js";
 
 export function routeFromHash() {
   const h = window.location.hash;
@@ -13,12 +14,14 @@ export function routeFromHash() {
     h === "#/kpi"        ? "kpi"        :
     h === "#/products"   ? "products"   :
     h === "#/sales-team" ? "sales-team" :
+    h === "#/customers"  ? "customers"  :
     "home";
   document.getElementById("page-home").classList.toggle("hidden", view !== "home");
   document.getElementById("page-analysis").classList.toggle("hidden", view !== "analysis");
   document.getElementById("page-kpi").classList.toggle("hidden", view !== "kpi");
   document.getElementById("page-products").classList.toggle("hidden", view !== "products");
   document.getElementById("page-sales-team").classList.toggle("hidden", view !== "sales-team");
+  document.getElementById("page-customers").classList.toggle("hidden", view !== "customers");
   document.getElementById("page-browse").classList.toggle("hidden", view !== "records");
   document.querySelectorAll(".nav-link").forEach(btn => {
     btn.classList.toggle("active", btn.dataset.view === view);
@@ -28,5 +31,6 @@ export function routeFromHash() {
   if (view === "kpi") renderKpi();
   if (view === "products") renderProducts();
   if (view === "sales-team") renderSalesTeam();
+  if (view === "customers") renderCustomers();
   if (view === "records") renderBrowse();
 }

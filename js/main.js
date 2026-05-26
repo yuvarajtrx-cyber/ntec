@@ -11,6 +11,8 @@ import { renderKpi, wireKpi } from "./pages/kpi.js";
 import { renderProducts, wireProducts } from "./pages/products.js";
 import { renderBrowse, wireBrowse } from "./pages/browse.js";
 import { renderSalesTeam, wireSalesTeam } from "./pages/sales-team.js";
+import { renderCustomers, wireCustomers } from "./pages/customers.js";
+import { wireConfirm } from "./confirm.js";
 
 // Pages must be direct children of .main-shell so the CSS height/overflow chain
 // (.main-shell → .page → .home-scroll) works. Modals are position:fixed, so
@@ -21,11 +23,13 @@ const PAGE_PARTIALS = [
   "pages/kpi.html",
   "pages/products.html",
   "pages/sales-team.html",
+  "pages/customers.html",
   "pages/browse.html",
 ];
 const MODAL_PARTIALS = [
   "pages/modal-pivot.html",
   "pages/modal-product.html",
+  "pages/modal-confirm.html",
 ];
 
 async function loadPartials() {
@@ -60,6 +64,7 @@ function wireShell() {
         v === "kpi"        ? "#/kpi"        :
         v === "products"   ? "#/products"   :
         v === "sales-team" ? "#/sales-team" :
+        v === "customers"  ? "#/customers"  :
         "";
     });
   });
@@ -100,6 +105,8 @@ async function init() {
   wireAnalysis();
   wireHome();
   wireSalesTeam();
+  wireCustomers();
+  wireConfirm();
 
   let payload = null;
   try {
@@ -127,6 +134,7 @@ async function init() {
   renderProducts();
   renderBrowse();
   renderSalesTeam();
+  renderCustomers();
   routeFromHash();
 }
 

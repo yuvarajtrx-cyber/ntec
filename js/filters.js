@@ -52,13 +52,24 @@ export function refreshFilterOptions() {
   const analysisCategory = document.getElementById("analysis-category");
   const currentAnalysisCategory = analysisCategory.value;
   analysisCategory.innerHTML = `<option value="">All</option>`;
-  saleTypeOptions(state.rows.map(r => r.category)).forEach(([value, label]) => {
+  uniqueSorted(state.rows, "category").forEach(v => {
     const opt = document.createElement("option");
-    opt.value = value;
-    opt.textContent = label;
+    opt.value = v;
+    opt.textContent = v;
     analysisCategory.appendChild(opt);
   });
   analysisCategory.value = currentAnalysisCategory;
+
+  const analysisSalesperson = document.getElementById("analysis-salesperson");
+  const currentAnalysisSalesperson = analysisSalesperson.value;
+  analysisSalesperson.innerHTML = `<option value="">All</option>`;
+  uniqueSorted(state.rows, "sales_person").forEach(v => {
+    const opt = document.createElement("option");
+    opt.value = v;
+    opt.textContent = v;
+    analysisSalesperson.appendChild(opt);
+  });
+  analysisSalesperson.value = currentAnalysisSalesperson;
 
   const analysisLocation = document.getElementById("analysis-location");
   const currentAnalysisLocation = analysisLocation.value;
@@ -100,12 +111,22 @@ export function refreshProductFilterOptions() {
   const catSel = document.getElementById("products-filter-category");
   const curCat = catSel.value;
   catSel.innerHTML = `<option value="">All</option>`;
-  saleTypeOptions(lineItems.map(li => li.category)).forEach(([value, label]) => {
+  [...new Set(lineItems.map(li => li.category).filter(Boolean))].sort().forEach(v => {
     const opt = document.createElement("option");
-    opt.value = value; opt.textContent = label;
+    opt.value = v; opt.textContent = v;
     catSel.appendChild(opt);
   });
   catSel.value = curCat;
+
+  const personSel = document.getElementById("products-filter-salesperson");
+  const curPerson = personSel.value;
+  personSel.innerHTML = `<option value="">All</option>`;
+  [...new Set(lineItems.map(li => li.sales_person).filter(Boolean))].sort().forEach(v => {
+    const opt = document.createElement("option");
+    opt.value = v; opt.textContent = v;
+    personSel.appendChild(opt);
+  });
+  personSel.value = curPerson;
 
   const monthSel = document.getElementById("products-filter-month");
   const curMonth = monthSel.value;

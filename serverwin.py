@@ -1,5 +1,4 @@
-
-
+import io
 import math
 import re
 import time
@@ -40,7 +39,6 @@ LOCATION_ALIASES = {
 
 
 def parse_location(ref):
-    """Pull the location out of a voucher ref like 'DISPATCH FROM TIRUPUR'."""
     if ref is None:
         return None
     s = str(ref).strip()
@@ -125,8 +123,6 @@ def from_db() -> pd.DataFrame:
 
 
 def salesperson_canon(name) -> str:
-    """Canonical form for a salesperson name. Trims, collapses whitespace,
-    and title-cases so 'BALAJI', 'balaji', 'Balaji ' all become 'Balaji'."""
     if not name:
         return ""
     s = re.sub(r"\s+", " ", str(name)).strip()
@@ -144,7 +140,6 @@ _ENTITY_SUFFIXES = sorted([
 
 
 def clean_excel_text(value) -> str:
-    """Clean common Excel artifacts from uploaded/customer text."""
     if value is None:
         return ""
     s = str(value)
@@ -156,20 +151,12 @@ def clean_excel_text(value) -> str:
 
 
 def customer_key(name) -> str:
-    """Normalize a customer name for joining transactions ↔ mapping.
-
-    Lowercases, strips punctuation, collapses whitespace, then strips
-    trailing Indian-company entity suffixes (Pvt Ltd / Private Limited /
-    Limited / etc.) so e.g. 'Radium Creation Private Limited' and
-    'Radium Creation Limited' both key to 'radium creation'.
-    """
     s = clean_excel_text(name).lower()
     if not s:
         return ""
     s = re.sub(r"[.,;:'\"()\[\]/\\\-_]", " ", s)
     s = re.sub(r"&", " and ", s)
     s = re.sub(r"\s+", " ", s).strip()
-    # Repeatedly peel trailing entity suffixes, but keep at least one word.
     changed = True
     while changed:
         changed = False
@@ -184,17 +171,12 @@ def customer_key(name) -> str:
 
 
 def customer_key_variants(name) -> list[str]:
-    """Return exact-first customer keys, then conservative base-name fallbacks."""
     raw = clean_excel_text(name)
     if not raw:
         return []
-
     candidates = [raw]
-    # Branch/location suffixes commonly arrive as "Name - City".
     if re.search(r"\s*[-–—]\s*", raw):
         candidates.append(re.split(r"\s*[-–—]\s*", raw, maxsplit=1)[0])
-
-    # Some sales names have parenthetical branch hints that are absent in maps.
     without_parens = re.sub(r"\([^)]*\)", " ", raw)
     if without_parens != raw:
         candidates.append(without_parens)
@@ -220,7 +202,6 @@ def resolve_salesperson(name, salesperson_by_customer: dict[str, str]) -> str:
 
 
 def fetch_salesperson_map() -> dict[str, str]:
-    """normalized customer_name -> sales_person."""
     try:
         rows = db.fetch_all(f"SELECT customer_name, sales_person FROM {SALESPERSON_TABLE}")
     except Exception:
@@ -246,7 +227,6 @@ def fetch_salesperson_map() -> dict[str, str]:
 
 
 def fetch_line_items() -> dict[str, list[dict]]:
-    """Return product line items grouped by voucher_no."""
     try:
         rows = db.fetch_all(
             f"SELECT voucher_no, line_no, particulars, quantity, rate, value "
@@ -278,21 +258,9 @@ def build_payload() -> dict:
         "sgst_9pct", "cgst_9pct", "igst_18pct",
         "gst_exports_fg", "gst_exports_rm", "gst_sales_dom_fg",
         "gst_sales_dom_rm", "scrap_sales",
-        "discount", "gst_sales_freight", "round_off",
     ]:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
-
-    # Taxable value as billed = (Value) − Discount + Freight. The raw "Value"
-    # column from the Excel sheet on its own understates taxable because it
-    # excludes freight and ignores discounts. We preserve the raw value as
-    # `value_raw` so the underlying number stays visible if needed.
-    if "taxable_value" in df.columns:
-        v = df["taxable_value"].fillna(0)
-        d = df["discount"].fillna(0) if "discount" in df.columns else 0
-        f = df["gst_sales_freight"].fillna(0) if "gst_sales_freight" in df.columns else 0
-        df["value_raw"] = v
-        df["taxable_value"] = v - d + f
 
     df["category"] = df.apply(classify, axis=1)
     df["location"] = df["voucher_ref_no"].apply(parse_location) if "voucher_ref_no" in df.columns else None
@@ -300,8 +268,7 @@ def build_payload() -> dict:
 
     keep = [
         "voucher_date", "voucher_no", "voucher_type", "category", "particulars",
-        "gstin_uin", "location", "quantity", "rate", "taxable_value", "value_raw",
-        "discount", "gst_sales_freight", "gross_total",
+        "gstin_uin", "location", "quantity", "rate", "taxable_value", "gross_total",
         "sgst_9pct", "cgst_9pct", "igst_18pct",
     ]
     keep = [c for c in keep if c in df.columns]
@@ -312,8 +279,6 @@ def build_payload() -> dict:
     for r in df[keep].to_dict(orient="records"):
         row = {k: clean_val(v) for k, v in r.items()}
         row["line_items"] = line_items_by_vno.get(row.get("voucher_no"), [])
-        # Clean Excel artifacts in the visible customer name. The original
-        # value stays in the DB; this only affects the payload sent to clients.
         if isinstance(row.get("particulars"), str):
             row["particulars"] = clean_excel_text(row["particulars"])
         row["sales_person"] = resolve_salesperson(row.get("particulars"), salesperson_by_customer)
@@ -346,13 +311,10 @@ def api_upload():
     if not f.filename.lower().endswith((".xlsx", ".xls")):
         return jsonify({"error": "File must be .xlsx or .xls"}), 400
 
-    import tempfile
-    with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=True) as tmp:
-        f.save(tmp.name)
-        try:
-            df = pd.read_excel(tmp.name)
-        except Exception as e:
-            return jsonify({"error": f"Failed to parse Excel: {e}"}), 400
+    try:
+        df = pd.read_excel(f)
+    except Exception as e:
+        return jsonify({"error": f"Failed to parse Excel: {e}"}), 400
 
     if "Particulars" not in df.columns or "Date" not in df.columns:
         return jsonify({
@@ -365,62 +327,10 @@ def api_upload():
     if not vouchers:
         return jsonify({"error": "No voucher header rows (with a Date) found in the file"}), 400
 
-    # mode: "skip" (default) inserts only new voucher_nos.
-    #       "replace" deletes existing rows for matching voucher_nos, then inserts.
-    mode = (request.args.get("mode") or request.form.get("mode") or "skip").lower()
-    if mode not in {"skip", "replace"}:
-        mode = "skip"
-
-    # Dedupe within the uploaded file itself: same voucher_no twice in one Excel
-    # should be treated as one row, not two.
-    seen_in_file: set[str] = set()
-    file_duplicates: list[str] = []
-    deduped_vouchers: list[dict] = []
-    for v in vouchers:
-        vno = v.get("voucher_no")
-        if not vno:
-            continue
-        if vno in seen_in_file:
-            file_duplicates.append(vno)
-            continue
-        seen_in_file.add(vno)
-        deduped_vouchers.append(v)
-
-    # Compare against what's already in the DB.
-    incoming_vnos = [v["voucher_no"] for v in deduped_vouchers]
-    try:
-        existing_rows = db.fetch_all(
-            f"SELECT voucher_no FROM {TABLE_NAME} WHERE voucher_no = ANY(%s)",
-            (incoming_vnos,),
-        ) if incoming_vnos else []
-    except Exception as e:
-        return jsonify({"error": f"DB lookup failed: {e}"}), 500
-    existing_vnos = {r["voucher_no"] for r in existing_rows}
-
-    new_vouchers = [v for v in deduped_vouchers if v["voucher_no"] not in existing_vnos]
-    dup_vouchers = [v for v in deduped_vouchers if v["voucher_no"] in existing_vnos]
-    dup_sample = sorted(existing_vnos)[:10]
-
     try:
         with db.connect() as conn, conn.cursor() as cur:
-            if mode == "replace" and existing_vnos:
-                cur.execute(
-                    f"DELETE FROM {LINE_ITEM_TABLE} WHERE voucher_no = ANY(%s)",
-                    (list(existing_vnos),),
-                )
-                cur.execute(
-                    f"DELETE FROM {TABLE_NAME} WHERE voucher_no = ANY(%s)",
-                    (list(existing_vnos),),
-                )
-                vouchers_to_insert = deduped_vouchers
-                kept_vnos = set(incoming_vnos)
-            else:
-                vouchers_to_insert = new_vouchers
-                kept_vnos = {v["voucher_no"] for v in new_vouchers}
-
-            line_items_to_insert = [li for li in line_items if li.get("voucher_no") in kept_vnos]
-            _insert_records(cur, TABLE_NAME, vouchers_to_insert)
-            _insert_records(cur, LINE_ITEM_TABLE, line_items_to_insert)
+            _insert_records(cur, TABLE_NAME, vouchers)
+            _insert_records(cur, LINE_ITEM_TABLE, line_items)
     except Exception as e:
         return jsonify({
             "error": f"Insert failed: {e}",
@@ -431,24 +341,16 @@ def api_upload():
     _cache["fetched_at"] = 0.0
 
     return jsonify({
-        "inserted": len(vouchers_to_insert),
-        "line_items_inserted": len(line_items_to_insert),
-        "skipped_duplicates": len(dup_vouchers),
-        "file_internal_duplicates": len(file_duplicates),
-        "duplicate_samples": dup_sample,
+        "inserted": len(vouchers),
+        "line_items_inserted": len(line_items),
         "rows_in_file": len(df),
-        "mode": mode,
         "filename": f.filename,
     })
 
 
 @app.post("/api/upload-salespersons")
 def api_upload_salespersons():
-    """Accept a salesperson-mapping Excel and FULLY REPLACE the table.
-
-    Expected columns: 'CUSTOMER NAME' and 'Sales Person' (case-insensitive,
-    extra columns like 'S.No' are ignored).
-    """
+    """Accept a salesperson-mapping Excel and FULLY REPLACE the table."""
     f = request.files.get("file")
     if not f or not f.filename:
         return jsonify({"error": "No file provided"}), 400
@@ -469,7 +371,6 @@ def api_upload_salespersons():
         return c, p
 
     def parse_sheet(sheet_df):
-        """Return (records, customer_col, person_col) for a single sheet, or None."""
         c, p = find_cols(sheet_df.columns)
         if not c or not p:
             raw = sheet_df.copy()
@@ -484,6 +385,7 @@ def api_upload_salespersons():
                     break
         if not c or not p:
             return None, None, None
+
         recs = []
         for _, raw in sheet_df.iterrows():
             name = clean_excel_text(raw.get(c))
@@ -493,13 +395,11 @@ def api_upload_salespersons():
             recs.append({"customer_name": name, "sales_person": person})
         return recs, c, p
 
-    import tempfile
-    with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=True) as tmp:
-        f.save(tmp.name)
-        try:
-            sheets = pd.read_excel(tmp.name, sheet_name=None)  # dict[name -> df]
-        except Exception as e:
-            return jsonify({"error": f"Failed to parse Excel: {e}"}), 400
+    try:
+        file_bytes = f.read()
+        sheets = pd.read_excel(io.BytesIO(file_bytes), sheet_name=None)
+    except Exception as e:
+        return jsonify({"error": f"Failed to parse Excel: {e}"}), 400
 
     all_records: list[dict] = []
     sheets_used: list[str] = []
@@ -536,9 +436,6 @@ def api_upload_salespersons():
             "sheets_skipped": sheets_skipped,
         }), 400
 
-    # Dedupe across sheets by normalized customer name. Later sheets win because
-    # the workbook's detailed "Customer List With Sales Person" sheet should
-    # override older summary/debtor sheets when they disagree.
     records_by_key: dict[str, dict] = {}
     duplicates_replaced = 0
     for r in all_records:
@@ -549,6 +446,9 @@ def api_upload_salespersons():
             duplicates_replaced += 1
         records_by_key[key] = r
     records = list(records_by_key.values())
+
+    if not records:
+        return jsonify({"error": "No valid customer/salesperson rows found"}), 400
 
     try:
         with db.connect() as conn, conn.cursor() as cur:

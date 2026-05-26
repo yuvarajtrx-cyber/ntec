@@ -7,6 +7,8 @@ import { renderProducts } from "./pages/products.js";
 import { renderKpi } from "./pages/kpi.js";
 import { renderHome } from "./pages/home.js";
 import { renderSalesTeam } from "./pages/sales-team.js";
+import { renderCustomers } from "./pages/customers.js";
+import { showConfirm } from "./confirm.js";
 
 export async function fetchData() {
   const res = await fetch("/api/sales", { cache: "no-store" });
@@ -18,28 +20,84 @@ export async function fetchData() {
   return body;
 }
 
+async function postUpload(file, mode) {
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("mode", mode);
+  const res = await fetch(`/api/upload?mode=${encodeURIComponent(mode)}`, {
+    method: "POST",
+    body: fd,
+  });
+  const data = await res.json().catch(() => ({}));
+  return { ok: res.ok, status: res.status, data };
+}
+
 export async function uploadFile(file) {
   const btn = document.getElementById("upload-btn");
   const original = btn.innerHTML;
   btn.disabled = true;
   btn.innerHTML = `<span class="upload-icon">⟳</span> Uploading…`;
-  showToast(`Uploading ${file.name}…`, "Reading file and inserting into Postgres");
-
-  const fd = new FormData();
-  fd.append("file", file);
+  showToast(`Uploading ${file.name}…`, "Reading file and checking for duplicates");
 
   try {
-    const res = await fetch("/api/upload", { method: "POST", body: fd });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      showToast("Upload failed", data.error || `HTTP ${res.status}`, "error");
+    let { ok, status, data } = await postUpload(file, "skip");
+    if (!ok) {
+      showToast("Upload failed", data.error || `HTTP ${status}`, "error");
       return;
     }
-    showToast(
-      `Inserted ${data.inserted} voucher${data.inserted === 1 ? "" : "s"}`,
-      `${data.line_items_inserted ?? 0} product line${(data.line_items_inserted ?? 0) === 1 ? "" : "s"} from ${data.filename}`,
-      "success"
-    );
+
+    const skipped = data.skipped_duplicates || 0;
+    const inserted = data.inserted || 0;
+    const samples = (data.duplicate_samples || []).slice(0, 5).join(", ");
+
+    if (skipped > 0) {
+      const sampleList = (data.duplicate_samples || []).slice(0, 10);
+      const moreCount = (data.duplicate_samples || []).length - sampleList.length;
+      const replace = await showConfirm({
+        eyebrow: "Duplicate Vouchers Found",
+        title: `${skipped} voucher${skipped === 1 ? "" : "s"} already exist in the database`,
+        message:
+          `Of ${skipped + inserted} voucher${(skipped + inserted) === 1 ? "" : "s"} in ${file.name}, ` +
+          `${inserted} new one${inserted === 1 ? " was" : "s were"} inserted and ${skipped} ` +
+          `match${skipped === 1 ? "es" : ""} an existing voucher number. ` +
+          `Replace the existing ones with the versions from this file, or keep the database unchanged.`,
+        details: sampleList.length ? {
+          label: moreCount > 0 ? `Sample duplicates (showing ${sampleList.length} of ${skipped})` : "Duplicate voucher numbers",
+          items: sampleList,
+        } : null,
+        okLabel: `Replace ${skipped} duplicate${skipped === 1 ? "" : "s"}`,
+        cancelLabel: "Keep existing",
+        danger: true,
+      });
+      if (replace) {
+        showToast("Replacing duplicates…", `Re-uploading ${file.name} with replace mode`);
+        const repl = await postUpload(file, "replace");
+        if (!repl.ok) {
+          showToast("Replace failed", repl.data.error || `HTTP ${repl.status}`, "error");
+          return;
+        }
+        data = repl.data;
+        showToast(
+          `Replaced & inserted ${data.inserted} voucher${data.inserted === 1 ? "" : "s"}`,
+          `${data.line_items_inserted ?? 0} line items · ${file.name}`,
+          "success"
+        );
+      } else {
+        showToast(
+          `Inserted ${inserted} new, skipped ${skipped} duplicate${skipped === 1 ? "" : "s"}`,
+          samples ? `Duplicates: ${samples}` : `From ${data.filename}`,
+          "success"
+        );
+      }
+    } else {
+      const dupInFile = data.file_internal_duplicates || 0;
+      const dupNote = dupInFile ? ` · ${dupInFile} same-file duplicate${dupInFile === 1 ? "" : "s"} merged` : "";
+      showToast(
+        `Inserted ${inserted} voucher${inserted === 1 ? "" : "s"}`,
+        `${data.line_items_inserted ?? 0} line items · ${data.filename}${dupNote}`,
+        "success"
+      );
+    }
     await reloadData();
   } catch (e) {
     showToast("Upload failed", e.message, "error");
@@ -96,6 +154,7 @@ export async function reloadData() {
     renderKpi();
     renderHome();
     renderSalesTeam();
+    renderCustomers();
   } catch (e) {
     showToast("Failed to refresh data", e.message, "error");
   }

@@ -1,0 +1,23 @@
+<div id="confirm-modal" class="modal hidden" aria-hidden="true">
+  <div class="modal-backdrop" data-confirm-close></div>
+  <div class="modal-card confirm-card" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+    <header class="modal-head">
+      <div>
+        <small class="modal-eyebrow" id="confirm-eyebrow">Confirm</small>
+        <h2 id="confirm-title">Confirm action</h2>
+      </div>
+      <button type="button" class="modal-close" data-confirm-close aria-label="Close">×</button>
+    </header>
+    <div class="modal-body">
+      <p class="confirm-message" id="confirm-message"></p>
+      <div class="confirm-details hidden" id="confirm-details">
+        <div class="confirm-details-label" id="confirm-details-label">Examples</div>
+        <ul class="confirm-details-list" id="confirm-details-list"></ul>
+      </div>
+    </div>
+    <footer class="confirm-actions">
+      <button type="button" class="btn-secondary" id="confirm-cancel">Cancel</button>
+      <button type="button" class="btn-primary" id="confirm-ok">OK</button>
+    </footer>
+  </div>
+</div>

@@ -33,6 +33,7 @@ export function flattenLineItems(rows) {
         voucher_no: r.voucher_no,
         voucher_date: r.voucher_date,
         customer: r.particulars,
+        sales_person: r.sales_person || "Unassigned",
         category: r.category,
         month: (r.voucher_date || "").slice(0, 7),
       });

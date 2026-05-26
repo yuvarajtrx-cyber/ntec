@@ -3,7 +3,6 @@ import { ACCENT, ANALYSIS_DIMENSIONS, ANALYSIS_MEASURES } from "../constants.js"
 import { money, num, escapeHtml, sumBy, debounce } from "../format.js";
 import { normalizeLocationValue } from "../location.js";
 import { productKey } from "../product-utils.js";
-import { saleTypeMatches } from "../sale-type.js";
 
 let analysisChart = null;
 let PIVOT_DRILLDOWN = null; // { dimLabel, keyValue, rows }
@@ -17,12 +16,29 @@ function getAnalysisState() {
     topN: Math.max(1, Number(document.getElementById("analysis-topn").value) || 20),
     q: document.getElementById("analysis-q").value.trim().toLowerCase(),
     category: document.getElementById("analysis-category").value,
+    market: document.getElementById("analysis-market").value,
+    material: document.getElementById("analysis-material").value,
+    salesperson: document.getElementById("analysis-salesperson").value,
     location: document.getElementById("analysis-location").value,
     month: document.getElementById("analysis-month").value,
     dateFrom: document.getElementById("analysis-date-from").value,
     dateTo: document.getElementById("analysis-date-to").value,
     product: document.getElementById("analysis-product").value,
   };
+}
+
+function rowMarket(r) {
+  const cat = String(r.category || "").toLowerCase();
+  if (cat.startsWith("domestic")) return "domestic";
+  if (cat.startsWith("export")) return "export";
+  return "other";
+}
+
+function rowMaterial(r) {
+  const cat = String(r.category || "");
+  if (/finished goods/i.test(cat)) return "fg";
+  if (/raw material/i.test(cat)) return "rm";
+  return "other";
 }
 
 function rowContainsProduct(r, product) {
@@ -40,7 +56,10 @@ function filterAnalysisRows(rows, s) {
   if (from && to && from > to) [from, to] = [to, from];
 
   return rows.filter(r => {
-    if (!saleTypeMatches(r.category, s.category)) return false;
+    if (s.category && r.category !== s.category) return false;
+    if (s.market && rowMarket(r) !== s.market) return false;
+    if (s.material && rowMaterial(r) !== s.material) return false;
+    if (s.salesperson && (r.sales_person || "Unassigned") !== s.salesperson) return false;
     if (s.location && normalizeLocationValue(r.location) !== s.location) return false;
     if (s.month && (r.voucher_date || "").slice(0, 7) !== s.month) return false;
     if (from && (!r.voucher_date || r.voucher_date < from)) return false;
@@ -193,6 +212,7 @@ function renderPivotDrilldown() {
   if (q) {
     filtered = rows.filter(r => {
       const hay = [r.voucher_no, r.particulars, r.gstin_uin, r.voucher_type, r.location, r.category]
+        .concat(r.sales_person || "")
         .filter(Boolean).join(" ").toLowerCase();
       return hay.includes(q);
     });
@@ -249,7 +269,8 @@ export function renderAnalysis() {
 export function wireAnalysis() {
   [
     "analysis-dim", "analysis-measure", "analysis-chart-type", "analysis-sort",
-    "analysis-topn", "analysis-q", "analysis-category", "analysis-location",
+    "analysis-topn", "analysis-q", "analysis-category", "analysis-market",
+    "analysis-material", "analysis-salesperson", "analysis-location",
     "analysis-month", "analysis-date-from", "analysis-date-to", "analysis-product",
   ].forEach(id => {
     const el = document.getElementById(id);
@@ -289,6 +310,9 @@ export function wireAnalysis() {
     document.getElementById("analysis-topn").value = "20";
     document.getElementById("analysis-q").value = "";
     document.getElementById("analysis-category").value = "";
+    document.getElementById("analysis-market").value = "";
+    document.getElementById("analysis-material").value = "";
+    document.getElementById("analysis-salesperson").value = "";
     document.getElementById("analysis-location").value = "";
     document.getElementById("analysis-month").value = "";
     document.getElementById("analysis-date-from").value = "";

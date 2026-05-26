@@ -23,6 +23,9 @@ export const KPI_DEFAULT_SETTINGS = {
 
 export const ANALYSIS_DIMENSIONS = {
   category: { label: "Sale Type", key: r => r.category || "Unknown" },
+  sales_person: { label: "Salesperson", key: r => r.sales_person || "Unassigned" },
+  market: { label: "Market", key: r => String(r.category || "").toLowerCase().startsWith("domestic") ? "Domestic" : String(r.category || "").toLowerCase().startsWith("export") ? "Export" : "Other" },
+  material: { label: "Material", key: r => /finished goods/i.test(r.category || "") ? "FG" : /raw material/i.test(r.category || "") ? "RM" : "Other" },
   location: { label: "Location", key: r => locationLabel(r.location) || "Unknown" },
   particulars: { label: "Customer", key: r => r.particulars || "Unknown" },
   voucher_type: { label: "Voucher Type", key: r => r.voucher_type || "Unknown" },

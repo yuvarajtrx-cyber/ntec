@@ -1,0 +1,78 @@
+<div id="page-customers" class="page hidden">
+
+  <header class="topbar">
+    <div>
+      <h1>Customers</h1>
+      <p class="subtitle">
+        <span id="customers-meta-source">loading…</span>
+        <span class="dot"></span>
+        <span id="customers-meta-count">—</span>
+      </p>
+    </div>
+  </header>
+
+  <section class="sales-team-scroll">
+
+    <nav class="sales-team-crumbs" id="customers-crumbs"></nav>
+
+    <div class="analysis-controls">
+      <label>Sale Type
+        <select id="cu-sale-group">
+          <option value="">All</option>
+          <option value="domestic">Domestic</option>
+          <option value="export">Export</option>
+          <option value="other">Other</option>
+        </select>
+      </label>
+      <label>Material
+        <select id="cu-material">
+          <option value="">All</option>
+          <option value="fg">Finished Goods</option>
+          <option value="rm">Raw Material</option>
+        </select>
+      </label>
+      <label>Salesperson
+        <select id="cu-salesperson"><option value="">All</option></select>
+      </label>
+      <label>Month
+        <select id="cu-month"><option value="">All</option></select>
+      </label>
+      <label>From
+        <input id="cu-date-from" type="date" />
+      </label>
+      <label>To
+        <input id="cu-date-to" type="date" />
+      </label>
+      <label>Search
+        <input id="cu-q" type="search" placeholder="contains..." />
+      </label>
+      <label class="range-label">Gross range
+        <div class="range-slider" id="cu-gross-slider">
+          <div class="range-track"></div>
+          <div class="range-fill" id="cu-gross-fill"></div>
+          <input id="cu-gross-min" type="range" min="0" max="100" step="1" value="0" />
+          <input id="cu-gross-max" type="range" min="0" max="100" step="1" value="100" />
+        </div>
+        <div class="range-values">
+          <span id="cu-gross-min-label">₹0</span>
+          <span id="cu-gross-max-label">—</span>
+        </div>
+      </label>
+      <button id="cu-reset" type="button">Reset</button>
+    </div>
+
+    <div class="insight-grid" id="cu-kpi-strip"></div>
+
+    <section class="dashboard-panel">
+      <div class="panel-head">
+        <h2 id="cu-panel-title">All Customers</h2>
+        <span id="cu-panel-count">—</span>
+      </div>
+      <div class="pivot-table-wrap">
+        <table class="pivot-table" id="cu-table"></table>
+      </div>
+    </section>
+
+  </section>
+
+</div>

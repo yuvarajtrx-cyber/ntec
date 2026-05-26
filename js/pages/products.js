@@ -13,18 +13,42 @@ function getProductState() {
     q: document.getElementById("products-search").value.trim().toLowerCase(),
     sort: document.getElementById("products-sort").value,
     category: document.getElementById("products-filter-category").value,
+    market: document.getElementById("products-filter-market").value,
+    material: document.getElementById("products-filter-material").value,
+    salesperson: document.getElementById("products-filter-salesperson").value,
     month: document.getElementById("products-filter-month").value,
     customer: document.getElementById("products-filter-customer").value,
   };
 }
 
+function lineMarket(li) {
+  const cat = String(li.category || "").toLowerCase();
+  if (cat.startsWith("domestic")) return "domestic";
+  if (cat.startsWith("export")) return "export";
+  return "other";
+}
+
+function lineMaterial(li) {
+  const cat = String(li.category || "");
+  if (/finished goods/i.test(cat)) return "fg";
+  if (/raw material/i.test(cat)) return "rm";
+  return "other";
+}
+
+function productLineMatches(li, st) {
+  if (st.category && li.category !== st.category) return false;
+  if (st.market && lineMarket(li) !== st.market) return false;
+  if (st.material && lineMaterial(li) !== st.material) return false;
+  if (st.salesperson && (li.sales_person || "Unassigned") !== st.salesperson) return false;
+  if (st.month && li.month !== st.month) return false;
+  if (st.customer && li.customer !== st.customer) return false;
+  if (st.q && !li.product.toLowerCase().includes(st.q)) return false;
+  return true;
+}
+
 function aggregateProducts(lineItems, st) {
   const filtered = lineItems.filter(li => {
-    if (!saleTypeMatches(li.category, st.category)) return false;
-    if (st.month && li.month !== st.month) return false;
-    if (st.customer && li.customer !== st.customer) return false;
-    if (st.q && !li.product.toLowerCase().includes(st.q)) return false;
-    return true;
+    return productLineMatches(li, st);
   });
 
   // Group by case/whitespace-insensitive key. The first display name wins,
@@ -401,11 +425,7 @@ export function renderProducts() {
 
   // Filter the totals/lineItems to match active filters so the summary is consistent
   const filteredLines = lineItems.filter(li => {
-    if (!saleTypeMatches(li.category, st.category)) return false;
-    if (st.month && li.month !== st.month) return false;
-    if (st.customer && li.customer !== st.customer) return false;
-    if (st.q && !li.product.toLowerCase().includes(st.q)) return false;
-    return true;
+    return productLineMatches(li, st);
   });
   renderProductTotals(groups, filteredLines);
   renderProductInsights(groups, filteredLines);
@@ -416,7 +436,8 @@ export function renderProducts() {
 export function wireProducts() {
   const rerenderProducts = () => { PRODUCTS_PAGE = 1; renderProducts(); };
   ["products-search", "products-sort",
-   "products-filter-category", "products-filter-month", "products-filter-customer"
+   "products-filter-category", "products-filter-market", "products-filter-material",
+   "products-filter-salesperson", "products-filter-month", "products-filter-customer"
   ].forEach(id => {
     const el = document.getElementById(id);
     const eventName = el.tagName === "INPUT" ? "input" : "change";
@@ -426,6 +447,9 @@ export function wireProducts() {
     document.getElementById("products-search").value = "";
     document.getElementById("products-sort").value = "value-desc";
     document.getElementById("products-filter-category").value = "";
+    document.getElementById("products-filter-market").value = "";
+    document.getElementById("products-filter-material").value = "";
+    document.getElementById("products-filter-salesperson").value = "";
     document.getElementById("products-filter-month").value = "";
     document.getElementById("products-filter-customer").value = "";
     PRODUCTS_PAGE = 1;
