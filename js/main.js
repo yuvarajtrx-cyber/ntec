@@ -2,10 +2,10 @@ import { state } from "./state.js";
 import { populateFilter, escapeHtml } from "./format.js";
 import { uniqueSorted } from "./rows.js";
 import { setMeta, setMetaError } from "./meta.js";
-import { apiJson, can, fetchData, loadSession, reloadData, uploadFile } from "./api.js";
+import { apiJson, can, fetchData, loadSession, reloadData, syncRangeFromPayload, uploadFile } from "./api.js";
 import { refreshFilterOptions, refreshProductFilterOptions } from "./filters.js";
 import { routeFromHash } from "./routing.js";
-import { RANGE_PRESETS } from "./data-range.js";
+import { formatYearsLabel } from "./data-range.js";
 import { renderHome, wireHome } from "./pages/home.js";
 import { renderAnalysis, wireAnalysis } from "./pages/analysis.js";
 import { renderKpi, wireKpi } from "./pages/kpi.js";
@@ -57,41 +57,135 @@ async function fetchPartial(path) {
   return res.text();
 }
 
+// Working set of checked years inside an open popover. Committed to
+// state.range.years on Apply; discarded on Cancel.
+let DRAFT_YEARS = new Set();
+
 function injectRangeSelectors() {
-  // The selector lives in every page's topbar so it's always visible. Each
-  // copy stays in sync with the others through state.range and reloadData.
-  const options = RANGE_PRESETS
-    .map(p => `<option value="${p.value}">${p.label}</option>`)
-    .join("");
+  // One button per page topbar; clicking opens a popover with year checkboxes.
+  // Buttons stay in sync via syncRangeButtons() after every fetch.
   document.querySelectorAll(".topbar-right").forEach(host => {
-    const wrap = document.createElement("label");
-    wrap.className = "data-range-control";
-    wrap.title = "Limits how much data the page loads from the server";
-    wrap.innerHTML = `
-      <span class="data-range-label">Data range</span>
-      <select class="data-range-select">${options}</select>
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "data-range-btn";
+    btn.title = "Choose which years to load from the server";
+    btn.innerHTML = `
+      <span class="data-range-label">Years</span>
+      <span class="data-range-value">—</span>
+      <span class="data-range-caret">▾</span>
     `;
-    host.insertBefore(wrap, host.firstChild);
+    host.insertBefore(btn, host.firstChild);
+  });
+
+  const pop = document.createElement("div");
+  pop.id = "data-range-popover";
+  pop.className = "data-range-popover hidden";
+  pop.innerHTML = `
+    <div class="data-range-pop-head">Load data for…</div>
+    <div class="data-range-pop-actions-top">
+      <button type="button" data-act="all">Select all</button>
+      <button type="button" data-act="none">Clear</button>
+    </div>
+    <div class="data-range-pop-list" id="data-range-pop-list"></div>
+    <div class="data-range-pop-actions">
+      <button type="button" class="ghost" data-act="cancel">Cancel</button>
+      <button type="button" class="primary" data-act="apply">Apply</button>
+    </div>
+  `;
+  document.body.appendChild(pop);
+}
+
+function syncRangeButtons() {
+  const label = formatYearsLabel(state.range.years);
+  document.querySelectorAll(".data-range-btn .data-range-value").forEach(el => {
+    el.textContent = label;
   });
 }
 
-async function applyRangePreset(preset) {
-  state.range = { preset, from: null, to: null };
-  document.querySelectorAll(".data-range-select").forEach(sel => {
-    if (sel.value !== preset) sel.value = preset;
-  });
+function openRangePopover(anchorBtn) {
+  const pop = document.getElementById("data-range-popover");
+  const list = document.getElementById("data-range-pop-list");
+  const available = state.range.availableYears || [];
+  DRAFT_YEARS = new Set(state.range.years);
+  list.innerHTML = available.length
+    ? [...available].sort((a, b) => b - a).map(y => `
+        <label class="data-range-pop-row">
+          <input type="checkbox" value="${y}" ${DRAFT_YEARS.has(y) ? "checked" : ""}>
+          <span>${y}</span>
+        </label>
+      `).join("")
+    : `<div class="data-range-pop-empty">No data uploaded yet.</div>`;
+
+  const rect = anchorBtn.getBoundingClientRect();
+  pop.style.top = `${rect.bottom + 6}px`;
+  pop.style.right = `${window.innerWidth - rect.right}px`;
+  pop.classList.remove("hidden");
+  pop.dataset.anchor = anchorBtn.id || "";
+}
+
+function closeRangePopover() {
+  document.getElementById("data-range-popover").classList.add("hidden");
+}
+
+async function applyDraftYears() {
+  const years = [...DRAFT_YEARS].sort((a, b) => a - b);
+  if (years.length === 0) {
+    showToast("Pick at least one year", "Select one or more years to load.", "error");
+    return;
+  }
+  state.range = { ...state.range, years };
+  closeRangePopover();
   document.body.classList.add("data-range-loading");
   try {
     await reloadData();
+    syncRangeButtons();
   } finally {
     document.body.classList.remove("data-range-loading");
   }
 }
 
 function wireRangeSelectors() {
-  document.querySelectorAll(".data-range-select").forEach(sel => {
-    sel.value = state.range.preset;
-    sel.addEventListener("change", () => applyRangePreset(sel.value));
+  const pop = document.getElementById("data-range-popover");
+  document.querySelectorAll(".data-range-btn").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      if (!pop.classList.contains("hidden")) {
+        closeRangePopover();
+        return;
+      }
+      openRangePopover(btn);
+    });
+  });
+  pop.addEventListener("click", e => {
+    const target = e.target;
+    if (target.matches("input[type=checkbox]")) {
+      const y = Number(target.value);
+      if (target.checked) DRAFT_YEARS.add(y);
+      else DRAFT_YEARS.delete(y);
+      return;
+    }
+    const act = target.dataset?.act;
+    if (!act) return;
+    if (act === "all") {
+      DRAFT_YEARS = new Set(state.range.availableYears || []);
+      pop.querySelectorAll("input[type=checkbox]").forEach(cb => { cb.checked = true; });
+    } else if (act === "none") {
+      DRAFT_YEARS.clear();
+      pop.querySelectorAll("input[type=checkbox]").forEach(cb => { cb.checked = false; });
+    } else if (act === "cancel") {
+      closeRangePopover();
+    } else if (act === "apply") {
+      applyDraftYears();
+    }
+  });
+  document.addEventListener("click", e => {
+    if (pop.classList.contains("hidden")) return;
+    if (pop.contains(e.target)) return;
+    if (e.target.closest(".data-range-btn")) return;
+    closeRangePopover();
+  });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && !pop.classList.contains("hidden")) closeRangePopover();
   });
 }
 
@@ -237,6 +331,8 @@ async function init() {
 
   setMeta(payload);
   state.rows = payload.rows || [];
+  syncRangeFromPayload(payload);
+  syncRangeButtons();
 
   populateFilter("filter-category", uniqueSorted(state.rows, "category"));
   populateFilter("filter-vtype",    uniqueSorted(state.rows, "voucher_type"));

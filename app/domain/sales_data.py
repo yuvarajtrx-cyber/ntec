@@ -4,36 +4,43 @@ import pandas as pd
 
 from app.domain.classify import classify
 from app.domain.customers import resolve_salesperson
-from app.data.data_access import fetch_line_items, fetch_salesperson_map, from_db
+from app.data.data_access import (
+    fetch_available_years,
+    fetch_line_items,
+    fetch_salesperson_map,
+    from_db,
+)
 from app.domain.location import parse_location
 from app.ingest.text_utils import clean_excel_text, clean_val
 
 CACHE_TTL_SEC = 60
 CACHE_MAX_ENTRIES = 6
-# Keyed by (date_from, date_to) so switching ranges doesn't evict the previous
-# range — flipping between This Month and This Year stays cheap.
-_cache: dict[tuple[str | None, str | None], dict] = {}
+# Keyed by the sorted tuple of selected years so flipping between selections
+# stays cheap (e.g. 2025 → 2024+2025 → 2025 doesn't re-query).
+_cache: dict[tuple[int, ...], dict] = {}
 
 
 def invalidate_cache() -> None:
     _cache.clear()
 
 
-def _empty_payload(date_from: str | None, date_to: str | None) -> dict:
+def _empty_payload(years: list[int], available_years: list[int]) -> dict:
     return {
         "source": "Local Postgres",
         "generated_at": pd.Timestamp.now().isoformat(),
         "rows": [],
-        "range": {"from": date_from, "to": date_to},
+        "range": {"years": years},
+        "available_years": available_years,
     }
 
 
-def build_payload(date_from: str | None = None, date_to: str | None = None) -> dict:
-    df = from_db(date_from, date_to)
+def build_payload(years: list[int]) -> dict:
+    available_years = fetch_available_years()
+    df = from_db(years)
     source = "Local Postgres"
 
     if df.empty:
-        return _empty_payload(date_from, date_to)
+        return _empty_payload(years, available_years)
 
     for col in [
         "quantity", "rate", "taxable_value", "gross_total",
@@ -85,17 +92,18 @@ def build_payload(date_from: str | None = None, date_to: str | None = None) -> d
         "source": source,
         "generated_at": pd.Timestamp.now().isoformat(),
         "rows": rows,
-        "range": {"from": date_from, "to": date_to},
+        "range": {"years": years},
+        "available_years": available_years,
     }
 
 
-def get_cached_payload(date_from: str | None = None, date_to: str | None = None) -> dict:
-    key = (date_from, date_to)
+def get_cached_payload(years: list[int]) -> dict:
+    key = tuple(sorted(years))
     now = time.time()
     entry = _cache.get(key)
     if entry and now - entry["fetched_at"] <= CACHE_TTL_SEC:
         return entry["payload"]
-    payload = build_payload(date_from, date_to)
+    payload = build_payload(list(key))
     _cache[key] = {"payload": payload, "fetched_at": now}
     # Cheap LRU-ish: drop oldest entries if we've blown the cap.
     while len(_cache) > CACHE_MAX_ENTRIES:

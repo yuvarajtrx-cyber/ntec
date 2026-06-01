@@ -9,7 +9,7 @@ import { renderHome } from "./pages/home.js";
 import { renderSalesTeam } from "./pages/sales-team.js";
 import { renderCustomers } from "./pages/customers.js";
 import { showConfirm } from "./confirm.js";
-import { rangeQueryString } from "./data-range.js";
+import { yearsQueryString } from "./data-range.js";
 
 let csrfToken = "";
 
@@ -69,7 +69,7 @@ export async function apiDownload(path, payload) {
 }
 
 export async function fetchData(range = state.range) {
-  const qs = rangeQueryString(range || {});
+  const qs = yearsQueryString(range?.years || []);
   const res = await fetch(`/api/sales${qs}`, { cache: "no-store" });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -77,6 +77,12 @@ export async function fetchData(range = state.range) {
     throw new Error(msg);
   }
   return body;
+}
+
+function syncRangeFromPayload(payload) {
+  const years = payload?.range?.years || [];
+  const availableYears = payload?.available_years || [];
+  state.range = { years: [...years], availableYears: [...availableYears] };
 }
 
 async function postUpload(file, mode) {
@@ -211,6 +217,7 @@ export async function reloadData() {
     const payload = await fetchData();
     setMeta(payload);
     state.rows = payload.rows || [];
+    syncRangeFromPayload(payload);
     refreshFilterOptions();
     refreshProductFilterOptions();
     renderBrowse();
@@ -223,3 +230,5 @@ export async function reloadData() {
     showToast("Failed to refresh data", e.message, "error");
   }
 }
+
+export { syncRangeFromPayload };

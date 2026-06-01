@@ -14,48 +14,43 @@ class DataSourceError(Exception):
     """Raised when the database is unreachable or returns no rows."""
 
 
-def fetch_latest_voucher_date() -> str | None:
-    """Most recent voucher_date in the table as ISO string, or None if empty.
+def fetch_available_years() -> list[int]:
+    """Distinct years present in voucher_date, ascending.
 
-    Used to anchor the "Latest Month / Year" presets to actual data instead of
-    today's calendar date — the table can hold years of historical vouchers,
-    so "this calendar month" is usually empty.
+    Used to populate the topbar year-checklist so the user only sees years
+    that actually have data.
     """
     try:
-        rows = db.fetch_all(f"SELECT MAX(voucher_date) AS d FROM {TABLE_NAME}")
+        rows = db.fetch_all(
+            f"SELECT DISTINCT EXTRACT(YEAR FROM voucher_date)::int AS y "
+            f"FROM {TABLE_NAME} WHERE voucher_date IS NOT NULL ORDER BY y"
+        )
     except Exception:
-        return None
-    if not rows:
-        return None
-    d = rows[0].get("d")
-    return d.isoformat() if d else None
+        return []
+    return [r["y"] for r in rows if r.get("y") is not None]
 
 
-def from_db(date_from: str | None = None, date_to: str | None = None) -> pd.DataFrame:
+def from_db(years: list[int] | None = None) -> pd.DataFrame:
     # NOTE: TABLE_NAME is a trusted constant. We still avoid f-string interpolation
     # in new code for defense-in-depth (see security review).
-    where_parts: list[str] = []
-    params: list = []
-    if date_from:
-        where_parts.append("voucher_date >= %s")
-        params.append(date_from)
-    if date_to:
-        where_parts.append("voucher_date <= %s")
-        params.append(date_to)
-    where_sql = (" WHERE " + " AND ".join(where_parts)) if where_parts else ""
+    where_sql = ""
+    params: tuple | None = None
+    if years:
+        where_sql = " WHERE EXTRACT(YEAR FROM voucher_date) = ANY(%s)"
+        params = (years,)
     query = f"SELECT * FROM {TABLE_NAME}{where_sql} ORDER BY voucher_date"
     try:
-        rows = db.fetch_all(query, tuple(params) if params else None)
+        rows = db.fetch_all(query, params)
     except Exception as e:
         raise DataSourceError(f"Could not fetch from Postgres: {e}") from e
 
     if not rows:
-        if not where_parts:
+        if not years:
             raise DataSourceError(
                 f"Table '{TABLE_NAME}' is empty. Use the Upload button to add data."
             )
-        # Empty range is a valid state — return an empty frame with the columns
-        # downstream code expects so build_payload can short-circuit cleanly.
+        # Empty selection is a valid state — return an empty frame so
+        # build_payload can short-circuit cleanly.
         return pd.DataFrame()
 
     df = pd.DataFrame(rows)

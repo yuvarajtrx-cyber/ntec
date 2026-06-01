@@ -11,7 +11,8 @@ export const state = {
   kpiPeriod: "1y",
   kpiActive: "concentration",
   kpiSettings: JSON.parse(JSON.stringify(KPI_DEFAULT_SETTINGS)),
-  // Server-side fetch scope. "preset" is what the user picked in the topbar
-  // selector; from/to are the resolved ISO dates sent to /api/sales.
-  range: { preset: "month", from: null, to: null },
+  // Server-side fetch scope. years[] is what /api/sales filters on (also
+  // what gets ticked in the topbar checklist). availableYears comes back from
+  // the server so the picker only offers years that actually have data.
+  range: { years: [], availableYears: [] },
 };

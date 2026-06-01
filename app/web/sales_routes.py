@@ -1,7 +1,5 @@
-import calendar
-import re
 import tempfile
-from datetime import date, timedelta
+from datetime import date
 
 import pandas as pd
 from flask import jsonify, request
@@ -14,7 +12,7 @@ from app.data.data_access import (
     DataSourceError,
     SALESPERSON_TABLE,
     TABLE_NAME,
-    fetch_latest_voucher_date,
+    fetch_available_years,
     insert_records,
 )
 from app.domain.sales_data import get_cached_payload, invalidate_cache
@@ -22,75 +20,49 @@ from app.ingest.salesperson_excel import TARGET_SHEET_KEY, norm_col, parse_sheet
 from app.ingest.upload import LINE_ITEM_TABLE, parse_workbook
 
 
-_ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-_VALID_PRESETS = {"month", "lastmonth", "year", "lastyear", "all"}
+def _parse_years_param(raw: str | None, available: list[int]) -> list[int]:
+    """Parse '2024,2025' into [2024, 2025], keeping only years that exist.
 
-
-def _month_bounds(year: int, month: int) -> tuple[str, str]:
-    last_day = calendar.monthrange(year, month)[1]
-    return date(year, month, 1).isoformat(), date(year, month, last_day).isoformat()
-
-
-def _year_bounds(year: int) -> tuple[str, str]:
-    return date(year, 1, 1).isoformat(), date(year, 12, 31).isoformat()
-
-
-def _resolve_preset(preset: str) -> tuple[str | None, str | None]:
-    """Map a preset name to (from, to) anchored on the latest voucher_date.
-
-    The table can hold years of historical data, so anchoring on today's
-    calendar would make the "Latest Month" default land in an empty window.
-    Anchoring on max(voucher_date) means the default always shows real data.
+    Empty / missing param → default to the current calendar year if it's in
+    the available set, else the most recent available year, else [] (table
+    is empty — let downstream raise DataSourceError).
     """
-    if preset == "all":
-        return None, None
-    anchor_iso = fetch_latest_voucher_date()
-    anchor = date.fromisoformat(anchor_iso) if anchor_iso else date.today()
-    if preset == "month":
-        return _month_bounds(anchor.year, anchor.month)
-    if preset == "lastmonth":
-        prev_month_last = date(anchor.year, anchor.month, 1) - timedelta(days=1)
-        return _month_bounds(prev_month_last.year, prev_month_last.month)
-    if preset == "year":
-        return _year_bounds(anchor.year)
-    if preset == "lastyear":
-        return _year_bounds(anchor.year - 1)
-    # Fallback: same as "month".
-    return _month_bounds(anchor.year, anchor.month)
-
-
-def _parse_range_param(value: str | None) -> str | None:
-    if not value:
-        return None
-    if not _ISO_DATE_RE.match(value):
-        raise ValueError(f"Invalid date '{value}', expected YYYY-MM-DD")
-    return value
+    if raw:
+        out: list[int] = []
+        for chunk in raw.split(","):
+            chunk = chunk.strip()
+            if not chunk:
+                continue
+            try:
+                y = int(chunk)
+            except ValueError:
+                raise ValueError(f"Invalid year '{chunk}'")
+            if y in available:
+                out.append(y)
+        if out:
+            return sorted(set(out))
+        # If the user passed years that aren't in the table, fall through to default.
+    if not available:
+        return []
+    current = date.today().year
+    if current in available:
+        return [current]
+    return [available[-1]]
 
 
 def register_sales_routes(app) -> None:
     @app.get("/api/sales")
     @permission_required("sales.view")
     def api_sales():
-        preset = (request.args.get("preset") or "").strip().lower()
+        available = fetch_available_years()
         try:
-            if preset:
-                if preset not in _VALID_PRESETS:
-                    return jsonify({"error": f"Unknown preset '{preset}'"}), 400
-                date_from, date_to = _resolve_preset(preset)
-            else:
-                date_from = _parse_range_param(request.args.get("from"))
-                date_to = _parse_range_param(request.args.get("to"))
-                if date_from is None and date_to is None:
-                    # No params and no preset → default to latest month with data.
-                    date_from, date_to = _resolve_preset("month")
+            years = _parse_years_param(request.args.get("years"), available)
         except ValueError as e:
             return jsonify({"error": str(e)}), 400
         try:
-            payload = get_cached_payload(date_from, date_to)
+            payload = get_cached_payload(years)
         except DataSourceError as e:
             return jsonify({"error": str(e)}), 503
-        if preset:
-            payload = {**payload, "range": {**payload.get("range", {}), "preset": preset}}
         return jsonify(payload)
 
     @app.post("/api/upload")
