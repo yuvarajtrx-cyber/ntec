@@ -1,6 +1,7 @@
+import calendar
 import re
 import tempfile
-from datetime import date
+from datetime import date, timedelta
 
 import pandas as pd
 from flask import jsonify, request
@@ -13,6 +14,7 @@ from app.data.data_access import (
     DataSourceError,
     SALESPERSON_TABLE,
     TABLE_NAME,
+    fetch_latest_voucher_date,
     insert_records,
 )
 from app.domain.sales_data import get_cached_payload, invalidate_cache
@@ -21,15 +23,40 @@ from app.ingest.upload import LINE_ITEM_TABLE, parse_workbook
 
 
 _ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+_VALID_PRESETS = {"month", "lastmonth", "year", "lastyear", "all"}
 
 
-def _current_month_range() -> tuple[str, str]:
-    today = date.today()
-    first = today.replace(day=1)
-    # Last day of month: jump to the 28th, add 4 days (lands in next month), back to day 1, subtract 1 day.
-    next_month = (first.replace(day=28) + pd.Timedelta(days=4)).replace(day=1)
-    last = next_month - pd.Timedelta(days=1)
-    return first.isoformat(), last.date().isoformat()
+def _month_bounds(year: int, month: int) -> tuple[str, str]:
+    last_day = calendar.monthrange(year, month)[1]
+    return date(year, month, 1).isoformat(), date(year, month, last_day).isoformat()
+
+
+def _year_bounds(year: int) -> tuple[str, str]:
+    return date(year, 1, 1).isoformat(), date(year, 12, 31).isoformat()
+
+
+def _resolve_preset(preset: str) -> tuple[str | None, str | None]:
+    """Map a preset name to (from, to) anchored on the latest voucher_date.
+
+    The table can hold years of historical data, so anchoring on today's
+    calendar would make the "Latest Month" default land in an empty window.
+    Anchoring on max(voucher_date) means the default always shows real data.
+    """
+    if preset == "all":
+        return None, None
+    anchor_iso = fetch_latest_voucher_date()
+    anchor = date.fromisoformat(anchor_iso) if anchor_iso else date.today()
+    if preset == "month":
+        return _month_bounds(anchor.year, anchor.month)
+    if preset == "lastmonth":
+        prev_month_last = date(anchor.year, anchor.month, 1) - timedelta(days=1)
+        return _month_bounds(prev_month_last.year, prev_month_last.month)
+    if preset == "year":
+        return _year_bounds(anchor.year)
+    if preset == "lastyear":
+        return _year_bounds(anchor.year - 1)
+    # Fallback: same as "month".
+    return _month_bounds(anchor.year, anchor.month)
 
 
 def _parse_range_param(value: str | None) -> str | None:
@@ -44,17 +71,27 @@ def register_sales_routes(app) -> None:
     @app.get("/api/sales")
     @permission_required("sales.view")
     def api_sales():
+        preset = (request.args.get("preset") or "").strip().lower()
         try:
-            date_from = _parse_range_param(request.args.get("from"))
-            date_to = _parse_range_param(request.args.get("to"))
+            if preset:
+                if preset not in _VALID_PRESETS:
+                    return jsonify({"error": f"Unknown preset '{preset}'"}), 400
+                date_from, date_to = _resolve_preset(preset)
+            else:
+                date_from = _parse_range_param(request.args.get("from"))
+                date_to = _parse_range_param(request.args.get("to"))
+                if date_from is None and date_to is None:
+                    # No params and no preset → default to latest month with data.
+                    date_from, date_to = _resolve_preset("month")
         except ValueError as e:
             return jsonify({"error": str(e)}), 400
-        if date_from is None and date_to is None:
-            date_from, date_to = _current_month_range()
         try:
-            return jsonify(get_cached_payload(date_from, date_to))
+            payload = get_cached_payload(date_from, date_to)
         except DataSourceError as e:
             return jsonify({"error": str(e)}), 503
+        if preset:
+            payload = {**payload, "range": {**payload.get("range", {}), "preset": preset}}
+        return jsonify(payload)
 
     @app.post("/api/upload")
     @permission_required("sales.upload")

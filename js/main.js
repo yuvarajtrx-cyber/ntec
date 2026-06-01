@@ -5,7 +5,7 @@ import { setMeta, setMetaError } from "./meta.js";
 import { apiJson, can, fetchData, loadSession, reloadData, uploadFile } from "./api.js";
 import { refreshFilterOptions, refreshProductFilterOptions } from "./filters.js";
 import { routeFromHash } from "./routing.js";
-import { RANGE_PRESETS, resolveRange } from "./data-range.js";
+import { RANGE_PRESETS } from "./data-range.js";
 import { renderHome, wireHome } from "./pages/home.js";
 import { renderAnalysis, wireAnalysis } from "./pages/analysis.js";
 import { renderKpi, wireKpi } from "./pages/kpi.js";
@@ -76,8 +76,7 @@ function injectRangeSelectors() {
 }
 
 async function applyRangePreset(preset) {
-  const resolved = resolveRange(preset);
-  state.range = { preset, from: resolved.from, to: resolved.to };
+  state.range = { preset, from: null, to: null };
   document.querySelectorAll(".data-range-select").forEach(sel => {
     if (sel.value !== preset) sel.value = preset;
   });
@@ -210,11 +209,6 @@ async function init() {
   await loadSession();
   await loadPartials();
   injectRangeSelectors();
-
-  // Resolve the default range BEFORE the first fetch so /api/sales gets
-  // explicit (from, to) instead of relying on server defaults.
-  const resolved = resolveRange(state.range.preset);
-  state.range = { ...state.range, from: resolved.from, to: resolved.to };
 
   wireShell();
   wireRangeSelectors();

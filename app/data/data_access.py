@@ -14,6 +14,23 @@ class DataSourceError(Exception):
     """Raised when the database is unreachable or returns no rows."""
 
 
+def fetch_latest_voucher_date() -> str | None:
+    """Most recent voucher_date in the table as ISO string, or None if empty.
+
+    Used to anchor the "Latest Month / Year" presets to actual data instead of
+    today's calendar date — the table can hold years of historical vouchers,
+    so "this calendar month" is usually empty.
+    """
+    try:
+        rows = db.fetch_all(f"SELECT MAX(voucher_date) AS d FROM {TABLE_NAME}")
+    except Exception:
+        return None
+    if not rows:
+        return None
+    d = rows[0].get("d")
+    return d.isoformat() if d else None
+
+
 def from_db(date_from: str | None = None, date_to: str | None = None) -> pd.DataFrame:
     # NOTE: TABLE_NAME is a trusted constant. We still avoid f-string interpolation
     # in new code for defense-in-depth (see security review).
