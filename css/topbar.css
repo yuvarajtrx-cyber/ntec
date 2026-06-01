@@ -17,6 +17,58 @@
 .dot { width: 3px; height: 3px; background: var(--muted); border-radius: 50%; }
 
 .topbar-right { display: flex; align-items: center; gap: 22px; }
+
+.data-range-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px 10px 4px 12px;
+}
+.data-range-control .data-range-label {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 10px;
+  font-weight: 600;
+}
+.data-range-control .data-range-select {
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  padding: 4px 2px;
+  cursor: pointer;
+}
+.data-range-control .data-range-select:focus { outline: none; }
+body.data-range-loading .data-range-select { opacity: 0.6; cursor: progress; }
+.export-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.export-actions button {
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--text);
+  padding: 8px 10px;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+.export-actions button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.export-actions button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
 .totals { display: flex; gap: 22px; font-size: 12px; color: var(--muted); }
 .totals .t-value {
   display: block;

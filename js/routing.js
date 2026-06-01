@@ -5,6 +5,7 @@ import { renderProducts } from "./pages/products.js";
 import { renderBrowse } from "./pages/browse.js";
 import { renderSalesTeam } from "./pages/sales-team.js";
 import { renderCustomers } from "./pages/customers.js";
+import { renderQuality } from "./pages/quality.js";
 import { renderAdminPage } from "./pages/admin.js";
 import { can } from "./api.js";
 
@@ -16,6 +17,7 @@ const VIEW_PERMS = {
   "sales-team": "page.sales_team",
   customers: "page.customers",
   records: "page.records",
+  quality: "page.quality_tracker",
   admin: "admin.view",
 };
 
@@ -24,7 +26,7 @@ function firstAllowedView() {
 }
 
 function pageIds() {
-  return ["home", "analysis", "kpi", "products", "sales-team", "customers", "browse", "admin"];
+  return ["home", "analysis", "kpi", "products", "sales-team", "customers", "browse", "quality", "admin"];
 }
 
 export function routeFromHash() {
@@ -36,6 +38,7 @@ export function routeFromHash() {
     h === "#/products"   ? "products"   :
     h === "#/sales-team" ? "sales-team" :
     h === "#/customers"  ? "customers"  :
+    h === "#/quality"    ? "quality"    :
     h === "#/admin"      ? "admin"      :
     "home";
   if (!can(VIEW_PERMS[view])) view = firstAllowedView();
@@ -59,6 +62,7 @@ export function routeFromHash() {
   document.getElementById("page-sales-team").classList.toggle("hidden", view !== "sales-team");
   document.getElementById("page-customers").classList.toggle("hidden", view !== "customers");
   document.getElementById("page-browse").classList.toggle("hidden", view !== "records");
+  document.getElementById("page-quality").classList.toggle("hidden", view !== "quality");
   document.getElementById("page-admin").classList.toggle("hidden", view !== "admin");
   document.querySelectorAll(".nav-link").forEach(btn => {
     btn.classList.toggle("active", btn.dataset.view === view);
@@ -70,5 +74,6 @@ export function routeFromHash() {
   if (view === "sales-team") renderSalesTeam();
   if (view === "customers") renderCustomers();
   if (view === "records") renderBrowse();
+  if (view === "quality") renderQuality();
   if (view === "admin") renderAdminPage();
 }

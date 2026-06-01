@@ -30,6 +30,7 @@
       <button class="admin-tab active" type="button" data-admin-tab="users">Users</button>
       <button class="admin-tab" type="button" data-admin-tab="roles">Roles & Access</button>
       <button class="admin-tab" type="button" data-admin-tab="departments">Departments</button>
+      <button class="admin-tab" type="button" data-admin-tab="quality">Quality Workflows</button>
       <button class="admin-tab" type="button" data-admin-tab="audit">Audit Log</button>
     </div>
 
@@ -143,6 +144,80 @@
           </thead>
           <tbody></tbody>
         </table>
+      </div>
+    </div>
+
+    <div class="admin-panel hidden" data-admin-panel="quality">
+      <form id="quality-workflow-form" class="admin-form">
+        <div class="admin-form-head">
+          <div>
+            <span>Workflow</span>
+            <strong id="quality-workflow-form-title">Create Workflow</strong>
+          </div>
+        </div>
+        <input type="hidden" id="quality-workflow-id" />
+        <label>Name <input id="quality-workflow-name" autocomplete="off" required placeholder="e.g. Credit Note High Value" /></label>
+        <label>Description <input id="quality-workflow-description" autocomplete="off" placeholder="Short note for admins" /></label>
+        <label>Status
+          <select id="quality-workflow-active">
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </label>
+        <fieldset>
+          <legend>Steps</legend>
+          <div id="quality-workflow-steps" class="quality-step-list"></div>
+          <button id="quality-step-add" class="admin-small-btn" type="button">Add Step</button>
+        </fieldset>
+        <div class="admin-actions">
+          <button type="submit">Save Workflow</button>
+          <button id="quality-workflow-reset" type="button">New Workflow</button>
+        </div>
+      </form>
+      <div>
+        <form id="quality-rule-form" class="admin-form compact-form">
+          <div class="admin-form-head">
+            <div>
+              <span>Routing Rule</span>
+              <strong id="quality-rule-form-title">Create Rule</strong>
+            </div>
+          </div>
+          <input type="hidden" id="quality-rule-id" />
+          <label>Nature
+            <select id="quality-rule-nature">
+              <option>Credit Note</option>
+              <option>Debit Note</option>
+              <option>Replacement</option>
+            </select>
+          </label>
+          <label>Min Value <input id="quality-rule-min" type="number" min="0" step="0.01" value="0" required /></label>
+          <label>Max Value <input id="quality-rule-max" type="number" min="0" step="0.01" placeholder="Blank = no upper limit" /></label>
+          <label>Initiator Role <select id="quality-rule-initiator-role"></select></label>
+          <label>Workflow <select id="quality-rule-workflow"></select></label>
+          <p class="admin-form-hint">Bands cover <strong>min ≤ value &lt; max</strong>. Max is the start of the next band, not included. So <strong>0 – 1000</strong> and <strong>1000 – blank</strong> sit side by side with no gap, and a query of exactly 1000 goes to the higher band.</p>
+          <label>Status
+            <select id="quality-rule-active">
+              <option value="true">Active</option>
+              <option value="false">Inactive</option>
+            </select>
+          </label>
+          <div class="admin-actions">
+            <button type="submit">Save Rule</button>
+            <button id="quality-rule-reset" type="button">New Rule</button>
+          </div>
+        </form>
+        <div class="admin-table-wrap">
+          <table class="txn-list" id="quality-workflows-table">
+            <thead><tr><th>Workflow</th><th>Steps</th><th>Status</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="txn-list" id="quality-rules-table">
+            <thead><tr><th>Nature</th><th>Value Range</th><th>Initiator Role</th><th>Workflow</th><th>Status</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </div>
     </div>
 

@@ -1,6 +1,6 @@
 import pandas as pd
 
-from text_utils import has_value
+from app.ingest.text_utils import has_value
 
 
 def classify(row) -> str:

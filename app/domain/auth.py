@@ -17,13 +17,15 @@ from psycopg import sql
 from werkzeug.security import check_password_hash, generate_password_hash
 from psycopg.types.json import Jsonb
 
-import db
+from app.data import db
 
 AUTH_USER_ID_KEY = "auth_user_id"
 CSRF_KEY = "csrf_token"
 LOGIN_WINDOW_SEC = 15 * 60
 MAX_LOGIN_ATTEMPTS = 5
 ADMIN_ROLE_NAME = "Admin"
+MAX_SHORT_TEXT_LEN = 200
+MAX_LONG_TEXT_LEN = 1000
 SYSTEM_ADMIN_PERMISSIONS = {
     "admin.view",
     "users.manage",
@@ -39,6 +41,7 @@ PAGE_PERMISSIONS = {
     "page.sales_team",
     "page.customers",
     "page.records",
+    "page.quality_tracker",
     "admin.view",
 }
 
@@ -50,9 +53,16 @@ DEFAULT_PERMISSIONS = [
     ("page.sales_team", "Sales Team", "Pages"),
     ("page.customers", "Customers", "Pages"),
     ("page.records", "Records List", "Pages"),
+    ("page.quality_tracker", "Quality Tracker", "Pages"),
     ("admin.view", "Admin", "Pages"),
+    ("sales.view", "View Sales Data", "Actions"),
     ("sales.upload", "Upload Sales", "Actions"),
     ("salesperson_map.upload", "Upload Salesperson Map", "Actions"),
+    ("quality.raise", "Raise Quality Queries", "Quality"),
+    ("quality.review", "Review Quality Queries", "Quality"),
+    ("quality.approve", "Approve / Reject Quality Queries", "Quality"),
+    ("quality.close", "Close Quality Queries", "Quality"),
+    ("quality.workflow.manage", "Manage Quality Workflows", "Quality"),
     ("users.manage", "Manage Users", "Admin"),
     ("roles.manage", "Manage Roles", "Admin"),
     ("departments.manage", "Manage Departments", "Admin"),
@@ -254,6 +264,37 @@ def ensure_auth_store(app=None) -> None:
                 SET label = EXCLUDED.label, category = EXCLUDED.category
                 """,
                 (key, label, category),
+            )
+
+        cur.execute(
+            """
+            SELECT 1
+            FROM public.app_audit_log
+            WHERE action = 'migration.sales_view_existing_page_roles'
+            LIMIT 1
+            """
+        )
+        if not cur.fetchone():
+            cur.execute(
+                """
+                INSERT INTO public.app_role_permission (role_id, permission_key)
+                SELECT DISTINCT role_id, 'sales.view'
+                FROM public.app_role_permission
+                WHERE permission_key LIKE 'page.%'
+                ON CONFLICT DO NOTHING
+                """
+            )
+            cur.execute(
+                """
+                INSERT INTO public.app_audit_log (action, target_type, target_id, detail)
+                VALUES (%s, %s, %s, %s)
+                """,
+                (
+                    "migration.sales_view_existing_page_roles",
+                    "app_role_permission",
+                    "sales.view",
+                    Jsonb({"reason": "Preserve sales data access for existing page roles"}),
+                ),
             )
 
         cur.execute(
@@ -477,6 +518,15 @@ def user_roles(user_id: int) -> list[dict]:
     )
 
 
+IMPLIED_PERMISSIONS: dict[str, str] = {
+    "quality.raise": "page.quality_tracker",
+    "quality.review": "page.quality_tracker",
+    "quality.approve": "page.quality_tracker",
+    "quality.close": "page.quality_tracker",
+    "quality.workflow.manage": "page.quality_tracker",
+}
+
+
 def user_permissions(user_id: int) -> list[str]:
     rows = db.fetch_all(
         """
@@ -489,7 +539,11 @@ def user_permissions(user_id: int) -> list[str]:
         """,
         (user_id,),
     )
-    return [r["permission_key"] for r in rows]
+    granted = {r["permission_key"] for r in rows}
+    for source, implied in IMPLIED_PERMISSIONS.items():
+        if source in granted:
+            granted.add(implied)
+    return sorted(granted)
 
 
 def has_permission(permission: str) -> bool:
@@ -542,31 +596,49 @@ def permissions_payload() -> list[dict]:
 
 
 def list_departments(include_inactive: bool = True) -> list[dict]:
-    where = "" if include_inactive else "WHERE is_active = true"
-    return db.fetch_all(
-        f"""
-        SELECT id, name, is_active
-        FROM public.app_department
-        {where}
-        ORDER BY is_active DESC, name
+    if include_inactive:
+        sql = """
+            SELECT id, name, is_active
+            FROM public.app_department
+            ORDER BY is_active DESC, name
         """
-    )
+        params = None
+    else:
+        sql = """
+            SELECT id, name, is_active
+            FROM public.app_department
+            WHERE is_active = true
+            ORDER BY is_active DESC, name
+        """
+        params = None
+    return db.fetch_all(sql, params)
 
 
 def list_roles(include_inactive: bool = True) -> list[dict]:
-    where = "" if include_inactive else "WHERE r.is_active = true"
-    roles = db.fetch_all(
-        f"""
-        SELECT r.id, r.name, r.description, r.is_active,
-               COALESCE(array_agg(rp.permission_key ORDER BY rp.permission_key)
-                        FILTER (WHERE rp.permission_key IS NOT NULL), ARRAY[]::text[]) AS permissions
-        FROM public.app_role r
-        LEFT JOIN public.app_role_permission rp ON rp.role_id = r.id
-        {where}
-        GROUP BY r.id
-        ORDER BY r.is_active DESC, r.name
+    if include_inactive:
+        sql = """
+            SELECT r.id, r.name, r.description, r.is_active,
+                   COALESCE(array_agg(rp.permission_key ORDER BY rp.permission_key)
+                            FILTER (WHERE rp.permission_key IS NOT NULL), ARRAY[]::text[]) AS permissions
+            FROM public.app_role r
+            LEFT JOIN public.app_role_permission rp ON rp.role_id = r.id
+            GROUP BY r.id
+            ORDER BY r.is_active DESC, r.name
         """
-    )
+        params = None
+    else:
+        sql = """
+            SELECT r.id, r.name, r.description, r.is_active,
+                   COALESCE(array_agg(rp.permission_key ORDER BY rp.permission_key)
+                            FILTER (WHERE rp.permission_key IS NOT NULL), ARRAY[]::text[]) AS permissions
+            FROM public.app_role r
+            LEFT JOIN public.app_role_permission rp ON rp.role_id = r.id
+            WHERE r.is_active = true
+            GROUP BY r.id
+            ORDER BY r.is_active DESC, r.name
+        """
+        params = None
+    roles = db.fetch_all(sql, params)
     for role in roles:
         role["permissions"] = list(role["permissions"] or [])
     return roles
@@ -590,7 +662,7 @@ def list_users() -> list[dict]:
 def create_user(payload: dict) -> dict:
     username = clean_required(payload.get("username"), "username")
     password = clean_required(payload.get("password"), "password")
-    display_name = clean_text(payload.get("displayName")) or username
+    display_name = clean_text(payload.get("displayName"), MAX_SHORT_TEXT_LEN, "display name") or username
     department_id = nullable_int(payload.get("departmentId"))
     role_ids = assignable_role_ids(int_list(payload.get("roleIds")), username)
     password_hash = generate_password_hash(password)
@@ -620,7 +692,7 @@ def update_user(user_id: int, payload: dict) -> dict:
         params.append(clean_required(payload.get("username"), "username"))
     if "displayName" in payload:
         fields.append("display_name = %s")
-        params.append(clean_text(payload.get("displayName")))
+        params.append(clean_text(payload.get("displayName"), MAX_SHORT_TEXT_LEN, "display name"))
     if "departmentId" in payload:
         fields.append("department_id = %s")
         params.append(nullable_int(payload.get("departmentId")))
@@ -692,11 +764,22 @@ def get_user(user_id: int) -> dict:
     return rows[0]
 
 
+def delete_user(user_id: int) -> None:
+    existing = get_user(user_id)
+    if is_admin_username(existing["username"]):
+        raise ValueError("The system admin user cannot be removed.")
+    actor = current_user()
+    if actor and actor["id"] == user_id:
+        raise ValueError("You cannot remove your own account.")
+    db.fetch_all("DELETE FROM public.app_user WHERE id = %s RETURNING id", (user_id,))
+    log_audit("user.delete", target_type="user", target_id=user_id, detail={"username": existing["username"]})
+
+
 def create_role(payload: dict) -> dict:
     name = clean_required(payload.get("name"), "name")
     if name.lower() == ADMIN_ROLE_NAME.lower():
         raise ValueError("The Admin role is reserved.")
-    description = clean_text(payload.get("description"))
+    description = clean_text(payload.get("description"), MAX_LONG_TEXT_LEN, "description")
     permissions = permission_list(payload.get("permissions"))
     with db.connect() as conn, conn.cursor() as cur:
         cur.execute(
@@ -725,7 +808,7 @@ def update_role(role_id: int, payload: dict) -> dict:
         params.append(clean_required(payload.get("name"), "name"))
     if "description" in payload:
         fields.append("description = %s")
-        params.append(clean_text(payload.get("description")))
+        params.append(clean_text(payload.get("description"), MAX_LONG_TEXT_LEN, "description"))
     if "isActive" in payload:
         fields.append("is_active = %s")
         params.append(bool(payload.get("isActive")))
@@ -750,6 +833,24 @@ def get_role(role_id: int) -> dict:
     if not rows:
         raise ValueError("Role not found.")
     return rows[0]
+
+
+def delete_role(role_id: int) -> None:
+    existing = get_role(role_id)
+    if existing["name"].lower() == ADMIN_ROLE_NAME.lower():
+        raise ValueError("The Admin role is reserved and cannot be removed.")
+    with db.connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT count(*) AS n FROM public.quality_workflow_rule WHERE initiator_role_id = %s",
+            (role_id,),
+        )
+        rule_count = int(cur.fetchone()["n"] or 0)
+        if rule_count:
+            raise ValueError(
+                f"Cannot remove role — {rule_count} routing rule(s) reference it. Update those rules first."
+            )
+        cur.execute("DELETE FROM public.app_role WHERE id = %s", (role_id,))
+    log_audit("role.delete", target_type="role", target_id=role_id, detail={"name": existing["name"]})
 
 
 def create_department(payload: dict) -> dict:
@@ -849,6 +950,15 @@ def get_department(department_id: int) -> dict:
     return rows[0]
 
 
+def delete_department(department_id: int) -> None:
+    existing = get_department(department_id)
+    db.fetch_all(
+        "DELETE FROM public.app_department WHERE id = %s RETURNING id",
+        (department_id,),
+    )
+    log_audit("department.delete", target_type="department", target_id=department_id, detail={"name": existing["name"]})
+
+
 def sync_user_roles(cur, user_id: int, role_ids: list[int]) -> None:
     cur.execute("DELETE FROM public.app_user_role WHERE user_id = %s", (user_id,))
     for role_id in role_ids:
@@ -867,12 +977,15 @@ def sync_role_permissions(cur, role_id: int, permissions: list[str]) -> None:
         )
 
 
-def clean_text(value) -> str:
-    return " ".join(str(value or "").split())
+def clean_text(value, max_len: int = MAX_SHORT_TEXT_LEN, field: str = "value") -> str:
+    cleaned = " ".join(str(value or "").split())
+    if len(cleaned) > max_len:
+        raise ValueError(f"{field} must be {max_len} characters or fewer.")
+    return cleaned
 
 
 def clean_required(value, field: str) -> str:
-    cleaned = clean_text(value)
+    cleaned = clean_text(value, MAX_SHORT_TEXT_LEN, field)
     if not cleaned:
         raise ValueError(f"{field} is required.")
     return cleaned

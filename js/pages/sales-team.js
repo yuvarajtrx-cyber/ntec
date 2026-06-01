@@ -2,6 +2,7 @@ import { state } from "../state.js";
 import { money, num, pct, escapeHtml, sumBy, debounce, monthLabel } from "../format.js";
 import { uniqueMonths } from "../rows.js";
 import { uploadSalespersonFile } from "../api.js";
+import { filtersFromControls, summaryFromCards, tableSectionFromDom, wireExportActions } from "../export.js";
 
 // Per-page state. Lives in this module (not global state) since nothing else needs it.
 const ST = {
@@ -657,6 +658,27 @@ export function renderSalesTeam() {
 }
 
 export function wireSalesTeam() {
+  wireExportActions({
+    excelId: "sales-team-export-excel",
+    pdfId: "sales-team-export-pdf",
+    buildPayload: () => ({
+      page: "sales-team",
+      title: "NTEC Sales Team Report",
+      filters: [
+        { label: "View", value: ST.view === "person" ? ST.selection.person || "Person Detail" : "Sales Team" },
+        ...filtersFromControls([
+          ["Sale Type", "st-sale-group"],
+          ["Material", "st-material"],
+          ["Month", "st-month"],
+          ["From", "st-date-from"],
+          ["To", "st-date-to"],
+          ["Search", "st-q"],
+        ]),
+      ],
+      summary: summaryFromCards("#st-kpi-strip"),
+      sections: [tableSectionFromDom(document.getElementById("st-panel-title").textContent || "Sales Team", "st-table")],
+    }),
+  });
   const bind = (id, evt, fn) => document.getElementById(id).addEventListener(evt, fn);
 
   bind("st-sale-group", "change", e => { ST.filters.saleGroup = e.target.value; renderSalesTeam(); });

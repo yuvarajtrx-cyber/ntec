@@ -1,0 +1,125 @@
+<div id="page-quality" class="page hidden">
+  <header class="topbar">
+    <div>
+      <h1>Quality Tracker</h1>
+      <p class="subtitle">
+        <span id="quality-meta">Queries and approvals</span>
+        <span class="dot"></span>
+        <span id="quality-count">—</span>
+      </p>
+    </div>
+    <div class="topbar-right">
+      <button class="upload-btn quality-raise-btn hidden" type="button" id="quality-raise-btn">
+        <span class="upload-icon">+</span> Raise Query
+      </button>
+    </div>
+  </header>
+
+  <section class="quality-body">
+    <div class="quality-toolbar">
+      <div class="quality-chips" role="tablist">
+        <button class="quality-chip active" type="button" data-quality-filter="inbox" role="tab" aria-selected="true">
+          Awaiting me <span class="quality-chip-count" id="quality-chip-inbox">0</span>
+        </button>
+        <button class="quality-chip" type="button" data-quality-filter="open" role="tab" aria-selected="false">
+          Open <span class="quality-chip-count" id="quality-chip-open">0</span>
+        </button>
+        <button class="quality-chip" type="button" data-quality-filter="closed" role="tab" aria-selected="false">
+          Closed <span class="quality-chip-count" id="quality-chip-closed">0</span>
+        </button>
+        <button class="quality-chip" type="button" data-quality-filter="all" role="tab" aria-selected="false">
+          All <span class="quality-chip-count" id="quality-chip-all">0</span>
+        </button>
+      </div>
+      <input id="quality-search" class="quality-search" type="search" placeholder="Search ticket #, title…" autocomplete="off" />
+    </div>
+
+    <div class="quality-table-wrap">
+      <table class="txn-list" id="quality-ticket-table">
+        <thead>
+          <tr>
+            <th>Query</th>
+            <th>Nature</th>
+            <th class="num">Value</th>
+            <th>Status</th>
+            <th>Current Step</th>
+            <th>Raised By</th>
+            <th>Raised</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <div id="quality-raise-modal" class="modal hidden" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-backdrop" data-quality-raise-close></div>
+    <div class="modal-card quality-raise-card">
+      <div class="modal-head">
+        <div>
+          <span class="modal-eyebrow">New Query</span>
+          <h2>Raise Quality Query</h2>
+          <p class="modal-sub">Routes automatically to the matching workflow.</p>
+        </div>
+        <button type="button" class="modal-close" data-quality-raise-close aria-label="Close">×</button>
+      </div>
+      <form id="quality-ticket-form" class="quality-raise-form">
+        <label>Nature
+          <select id="quality-ticket-nature">
+            <option>Credit Note</option>
+            <option>Debit Note</option>
+            <option>Replacement</option>
+          </select>
+        </label>
+        <label>Value <input id="quality-ticket-value" type="number" min="0" step="0.01" required placeholder="Amount involved" /></label>
+        <label class="quality-raise-full">Title <input id="quality-ticket-title" autocomplete="off" required placeholder="Short issue title" /></label>
+        <label class="quality-raise-full">Description <textarea id="quality-ticket-description" rows="5" placeholder="What happened, customer, invoice, batch, etc."></textarea></label>
+        <div class="quality-route-preview quality-raise-full" id="quality-route-preview" data-state="idle" role="status" aria-live="polite">Enter a value to see where this routes.</div>
+        <div class="quality-raise-actions">
+          <button type="button" class="quality-btn-secondary" data-quality-raise-close>Cancel</button>
+          <button type="submit" class="quality-btn-primary" id="quality-raise-submit" disabled>Raise Query</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <aside id="quality-detail" class="quality-drawer hidden" aria-hidden="true">
+    <div class="quality-drawer-backdrop" data-quality-detail-close></div>
+    <div class="quality-drawer-panel" role="dialog" aria-modal="true" aria-labelledby="quality-detail-title">
+      <header class="quality-drawer-head">
+        <div class="quality-drawer-head-text">
+          <span class="quality-drawer-eyebrow" id="quality-detail-ticket">Ticket</span>
+          <h2 id="quality-detail-title">—</h2>
+          <p class="quality-drawer-sub">
+            <span class="admin-status" id="quality-detail-status">—</span>
+            <span class="quality-drawer-step" id="quality-detail-step">—</span>
+          </p>
+        </div>
+        <button type="button" class="modal-close" data-quality-detail-close aria-label="Close">×</button>
+      </header>
+
+      <div class="quality-drawer-body">
+        <div class="quality-detail-grid" id="quality-detail-meta"></div>
+
+        <section class="quality-detail-block">
+          <h3 class="quality-block-title">Description</h3>
+          <p id="quality-detail-description" class="quality-description"></p>
+        </section>
+
+        <section class="quality-detail-block" id="quality-action-section">
+          <h3 class="quality-block-title">Take Action</h3>
+          <label class="quality-comment-label">Comment
+            <textarea id="quality-action-comment" rows="3" placeholder="Add a note for this action"></textarea>
+          </label>
+          <div class="quality-action-buttons" id="quality-action-buttons"></div>
+          <p class="quality-no-action hidden" id="quality-no-action">No action available for you right now.</p>
+        </section>
+
+        <section class="quality-detail-block">
+          <h3 class="quality-block-title">History</h3>
+          <div id="quality-history" class="quality-history"></div>
+        </section>
+      </div>
+    </div>
+  </aside>
+</div>

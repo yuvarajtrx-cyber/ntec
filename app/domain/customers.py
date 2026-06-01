@@ -1,6 +1,6 @@
 import re
 
-from text_utils import clean_excel_text
+from app.ingest.text_utils import clean_excel_text
 
 _ENTITY_SUFFIXES = sorted([
     "private limited", "pvt limited", "private ltd", "pvt ltd", "p ltd",

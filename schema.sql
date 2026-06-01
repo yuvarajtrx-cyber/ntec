@@ -125,3 +125,72 @@ create table if not exists public.app_audit_log (
 
 create index if not exists app_audit_log_created_idx on public.app_audit_log (created_at desc);
 create index if not exists app_audit_log_action_idx on public.app_audit_log (action);
+
+create table if not exists public.quality_workflow (
+    id          bigserial primary key,
+    name        text not null unique,
+    description text not null default '',
+    is_active   boolean not null default true,
+    created_at  timestamptz not null default now(),
+    updated_at  timestamptz not null default now()
+);
+
+create table if not exists public.quality_workflow_step (
+    id             bigserial primary key,
+    workflow_id    bigint not null references public.quality_workflow(id) on delete cascade,
+    step_order     int not null,
+    name           text not null,
+    role_id        bigint references public.app_role(id) on delete set null,
+    department_id  bigint references public.app_department(id) on delete set null,
+    user_id        bigint references public.app_user(id) on delete set null,
+    is_final       boolean not null default false,
+    is_active      boolean not null default true,
+    created_at     timestamptz not null default now(),
+    updated_at     timestamptz not null default now(),
+    unique (workflow_id, step_order)
+);
+
+create table if not exists public.quality_workflow_rule (
+    id                  bigserial primary key,
+    nature              text not null,
+    min_value           numeric(18, 2) not null default 0,
+    max_value           numeric(18, 2),
+    workflow_id         bigint not null references public.quality_workflow(id) on delete cascade,
+    initiator_role_id   bigint references public.app_role(id) on delete cascade,
+    is_active           boolean not null default true,
+    created_at          timestamptz not null default now(),
+    updated_at          timestamptz not null default now()
+);
+
+create table if not exists public.quality_ticket (
+    id                  bigserial primary key,
+    ticket_no           text not null unique,
+    nature              text not null,
+    value_amount        numeric(18, 2) not null default 0,
+    title               text not null,
+    description         text not null default '',
+    status              text not null default 'open',
+    workflow_id         bigint references public.quality_workflow(id) on delete set null,
+    current_step_id     bigint references public.quality_workflow_step(id) on delete set null,
+    raised_by_user_id   bigint references public.app_user(id) on delete set null,
+    department_id       bigint references public.app_department(id) on delete set null,
+    created_at          timestamptz not null default now(),
+    updated_at          timestamptz not null default now(),
+    closed_at           timestamptz
+);
+
+create table if not exists public.quality_ticket_action (
+    id             bigserial primary key,
+    ticket_id      bigint not null references public.quality_ticket(id) on delete cascade,
+    step_id        bigint references public.quality_workflow_step(id) on delete set null,
+    actor_user_id  bigint references public.app_user(id) on delete set null,
+    action         text not null,
+    comment        text not null default '',
+    created_at     timestamptz not null default now()
+);
+
+create index if not exists quality_workflow_step_workflow_idx on public.quality_workflow_step (workflow_id, step_order);
+create index if not exists quality_workflow_rule_nature_idx on public.quality_workflow_rule (nature, min_value, max_value);
+create index if not exists quality_ticket_status_idx on public.quality_ticket (status);
+create index if not exists quality_ticket_current_step_idx on public.quality_ticket (current_step_id);
+create index if not exists quality_ticket_action_ticket_idx on public.quality_ticket_action (ticket_id, created_at);

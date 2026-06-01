@@ -2,7 +2,7 @@ import re
 
 import pandas as pd
 
-from text_utils import clean_excel_text, salesperson_canon
+from app.ingest.text_utils import clean_excel_text, salesperson_canon
 
 CUSTOMER_KEYS = {"customername", "customer", "partyname", "party", "particulars"}
 PERSON_KEYS = {

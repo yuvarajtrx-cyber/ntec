@@ -3,6 +3,7 @@ import { ACCENT, ANALYSIS_DIMENSIONS, ANALYSIS_MEASURES } from "../constants.js"
 import { money, num, escapeHtml, sumBy, debounce } from "../format.js";
 import { normalizeLocationValue } from "../location.js";
 import { productKey } from "../product-utils.js";
+import { filtersFromControls, wireExportActions } from "../export.js";
 
 let analysisChart = null;
 let PIVOT_DRILLDOWN = null; // { dimLabel, keyValue, rows }
@@ -267,6 +268,58 @@ export function renderAnalysis() {
 }
 
 export function wireAnalysis() {
+  wireExportActions({
+    excelId: "analysis-export-excel",
+    pdfId: "analysis-export-pdf",
+    buildPayload: () => {
+      const s = getAnalysisState();
+      const dim = ANALYSIS_DIMENSIONS[s.dim];
+      const measure = ANALYSIS_MEASURES[s.measure];
+      const filteredRows = filterAnalysisRows(state.rows, s);
+      let groups = buildPivotGroups(filteredRows, dim, measure);
+      if (s.q) groups = groups.filter(g => String(g.key).toLowerCase().includes(s.q));
+      sortPivotGroups(groups, s.sort);
+      const limited = groups.slice(0, s.topN);
+      return {
+        page: "analysis",
+        title: "NTEC Analysis Report",
+        filters: filtersFromControls([
+          ["Group By", "analysis-dim"],
+          ["Measure", "analysis-measure"],
+          ["Sort", "analysis-sort"],
+          ["Top", "analysis-topn"],
+          ["Search Result", "analysis-q"],
+          ["Sale Type", "analysis-category"],
+          ["Market", "analysis-market"],
+          ["Material", "analysis-material"],
+          ["Salesperson", "analysis-salesperson"],
+          ["Location", "analysis-location"],
+          ["Month", "analysis-month"],
+          ["From", "analysis-date-from"],
+          ["To", "analysis-date-to"],
+          ["Product", "analysis-product"],
+        ]),
+        summary: [
+          { label: "Rows", value: String(filteredRows.length) },
+          { label: "Groups", value: String(groups.length) },
+          { label: measure.label, value: measure.format(measure.fn(filteredRows)) },
+        ],
+        sections: [{
+          title: "Pivot",
+          columns: [
+            { key: "key", label: dim.label },
+            { key: "value", label: measure.label },
+            { key: "count", label: "Records" },
+            { key: "taxable", label: "Taxable" },
+            { key: "gst", label: "GST" },
+            { key: "gross", label: "Gross" },
+            { key: "quantity", label: "Quantity" },
+          ],
+          rows: limited,
+        }],
+      };
+    },
+  });
   [
     "analysis-dim", "analysis-measure", "analysis-chart-type", "analysis-sort",
     "analysis-topn", "analysis-q", "analysis-category", "analysis-market",

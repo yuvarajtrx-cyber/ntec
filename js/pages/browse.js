@@ -3,6 +3,7 @@ import { money, num, escapeHtml, debounce } from "../format.js";
 import { normalizeLocationValue } from "../location.js";
 import { renderTotals } from "../meta.js";
 import { saleTypeMatches } from "../sale-type.js";
+import { SALES_COLUMNS, filtersFromControls, salesRows, wireExportActions } from "../export.js";
 
 let CURRENT_PAGE = 1;
 const EXPANDED_VOUCHERS = new Set();
@@ -170,6 +171,34 @@ export function renderBrowse() {
 }
 
 export function wireBrowse() {
+  wireExportActions({
+    excelId: "records-export-excel",
+    pdfId: "records-export-pdf",
+    buildPayload: () => {
+      const s = getBrowseState();
+      const filtered = applyFilters(state.rows, s);
+      const sorted = applySort(filtered, s.sort);
+      return {
+        page: "records",
+        title: "NTEC Records Report",
+        filters: filtersFromControls([
+          ["Search", "search"],
+          ["Sort", "sort"],
+          ["Sale Type", "filter-category"],
+          ["Location", "filter-location"],
+          ["Voucher Type", "filter-vtype"],
+          ["Month", "filter-month"],
+          ["Day", "filter-day"],
+        ]),
+        summary: [{ label: "Transactions", value: String(sorted.length) }],
+        sections: [{
+          title: "Records",
+          columns: SALES_COLUMNS,
+          rows: salesRows(sorted),
+        }],
+      };
+    },
+  });
   const rerenderFromFirstPage = () => {
     CURRENT_PAGE = 1;
     renderBrowse();

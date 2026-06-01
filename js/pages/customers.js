@@ -1,6 +1,7 @@
 import { state } from "../state.js";
 import { money, num, escapeHtml, sumBy, debounce, monthLabel } from "../format.js";
 import { uniqueMonths, uniqueSorted } from "../rows.js";
+import { filtersFromControls, summaryFromCards, tableSectionFromDom, wireExportActions } from "../export.js";
 
 const CU = {
   view: "l0",                  // "l0" | "l1"
@@ -302,6 +303,28 @@ function goTo(view, selection = {}) {
 }
 
 export function wireCustomers() {
+  wireExportActions({
+    excelId: "customers-export-excel",
+    pdfId: "customers-export-pdf",
+    buildPayload: () => ({
+      page: "customers",
+      title: "NTEC Customers Report",
+      filters: [
+        { label: "View", value: CU.view === "l0" ? "All Customers" : CU.selection.customer || "Customer Detail" },
+        ...filtersFromControls([
+          ["Sale Type", "cu-sale-group"],
+          ["Material", "cu-material"],
+          ["Salesperson", "cu-salesperson"],
+          ["Month", "cu-month"],
+          ["From", "cu-date-from"],
+          ["To", "cu-date-to"],
+          ["Search", "cu-q"],
+        ]),
+      ],
+      summary: summaryFromCards("#cu-kpi-strip"),
+      sections: [tableSectionFromDom(document.getElementById("cu-panel-title").textContent || "Customers", "cu-table")],
+    }),
+  });
   const bind = (id, evt, fn) => document.getElementById(id).addEventListener(evt, fn);
 
   bind("cu-sale-group",  "change", e => { CU.filters.saleGroup = e.target.value; renderCustomers(); });

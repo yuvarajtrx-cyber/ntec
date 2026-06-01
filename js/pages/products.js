@@ -3,6 +3,7 @@ import { ACCENT, CHART_PALETTE, PRODUCT_CHART_MEASURES } from "../constants.js";
 import { money, num, escapeHtml, monthLabel, debounce } from "../format.js";
 import { flattenLineItems, productKey } from "../product-utils.js";
 import { saleTypeMatches, saleTypeOptions } from "../sale-type.js";
+import { filtersFromControls, summaryFromCards, wireExportActions } from "../export.js";
 
 let productsChart = null;
 let PRODUCTS_PAGE = 1;
@@ -434,6 +435,43 @@ export function renderProducts() {
 }
 
 export function wireProducts() {
+  wireExportActions({
+    excelId: "products-export-excel",
+    pdfId: "products-export-pdf",
+    buildPayload: () => {
+      const st = getProductState();
+      const lineItems = flattenLineItems(state.rows);
+      const groups = sortProducts(aggregateProducts(lineItems, st), st.sort);
+      return {
+        page: "products",
+        title: "NTEC Products Report",
+        filters: filtersFromControls([
+          ["Search", "products-search"],
+          ["Sort", "products-sort"],
+          ["Sale Type", "products-filter-category"],
+          ["Market", "products-filter-market"],
+          ["Material", "products-filter-material"],
+          ["Salesperson", "products-filter-salesperson"],
+          ["Month", "products-filter-month"],
+          ["Customer", "products-filter-customer"],
+        ]),
+        summary: summaryFromCards("#products-insight-grid"),
+        sections: [{
+          title: "Products",
+          columns: [
+            { key: "product", label: "Product" },
+            { key: "quantity", label: "Quantity" },
+            { key: "avgRate", label: "Avg Rate" },
+            { key: "value", label: "Total Value" },
+            { key: "invoices", label: "Invoices" },
+            { key: "customers", label: "Customers" },
+            { key: "lastDate", label: "Last Sold" },
+          ],
+          rows: groups,
+        }],
+      };
+    },
+  });
   const rerenderProducts = () => { PRODUCTS_PAGE = 1; renderProducts(); };
   ["products-search", "products-sort",
    "products-filter-category", "products-filter-market", "products-filter-material",

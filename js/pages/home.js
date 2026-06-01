@@ -4,6 +4,7 @@ import { money, num, escapeHtml, isoDate, sumBy, groupRows } from "../format.js"
 import { locationLabel } from "../location.js";
 import { getReferenceDate } from "../rows.js";
 import { renderTotals } from "../meta.js";
+import { SALES_COLUMNS, salesRows, summaryFromCards, wireExportActions } from "../export.js";
 
 let dailyChart = null;
 let saleTypeChart = null;
@@ -365,6 +366,27 @@ export function renderHome() {
 }
 
 export function wireHome() {
+  wireExportActions({
+    excelId: "home-export-excel",
+    pdfId: "home-export-pdf",
+    buildPayload: () => {
+      const refDate = getReferenceDate(state.rows);
+      const buckets = buildHomeTimeline(state.homeRange, refDate);
+      const rows = rowsInRange(state.rows, buckets);
+      const rangeLabel = buckets.length ? `${buckets[0].start} to ${buckets[buckets.length - 1].end}` : "All";
+      return {
+        page: "home",
+        title: "NTEC Dashboard Report",
+        filters: [{ label: "Range", value: rangeLabel }],
+        summary: summaryFromCards("#insight-grid"),
+        sections: [{
+          title: "Vouchers",
+          columns: SALES_COLUMNS,
+          rows: salesRows(rows),
+        }],
+      };
+    },
+  });
   document.querySelectorAll("#home-range-bar .range-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       const r = btn.dataset.range;

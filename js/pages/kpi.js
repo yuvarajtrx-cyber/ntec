@@ -7,6 +7,7 @@ import {
 } from "../format.js";
 import { getReferenceDate } from "../rows.js";
 import { buildHomeTimeline } from "./home.js";
+import { filtersFromControls, summaryFromCards, tableSectionFromDom, wireExportActions } from "../export.js";
 
 let kpiConcentrationChart = null;
 let kpiRepeatChart = null;
@@ -544,6 +545,33 @@ export function renderKpi(options = {}) {
 }
 
 export function wireKpi() {
+  wireExportActions({
+    excelId: "kpi-export-excel",
+    pdfId: "kpi-export-pdf",
+    buildPayload: () => {
+      const activeTable = {
+        concentration: ["Revenue Concentration", "kpi-concentration-table"],
+        repeat: ["Repeat Customers", "kpi-repeat-table"],
+        cohort: ["Cohort Retention", "kpi-cohort-table"],
+        dormant: ["Dormant Customers", "kpi-dormant-table"],
+        cadence: ["Order Cadence", "kpi-cadence-table"],
+      }[state.kpiActive] || ["KPI", "kpi-concentration-table"];
+      return {
+        page: "kpi",
+        title: "NTEC KPI Report",
+        filters: [
+          { label: "KPI", value: document.getElementById("kpi-config-title").textContent || state.kpiActive },
+          ...filtersFromControls([
+            ["Period", "kpi-period"],
+            ["From", "kpi-date-from"],
+            ["To", "kpi-date-to"],
+          ]),
+        ],
+        summary: summaryFromCards("#kpi-summary"),
+        sections: [tableSectionFromDom(activeTable[0], activeTable[1])],
+      };
+    },
+  });
   document.getElementById("kpi-period").addEventListener("change", (e) => {
     state.kpiPeriod = e.target.value;
     renderKpi();

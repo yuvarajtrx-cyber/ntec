@@ -9,6 +9,7 @@ import { renderHome } from "./pages/home.js";
 import { renderSalesTeam } from "./pages/sales-team.js";
 import { renderCustomers } from "./pages/customers.js";
 import { showConfirm } from "./confirm.js";
+import { rangeQueryString } from "./data-range.js";
 
 let csrfToken = "";
 
@@ -47,8 +48,29 @@ export async function apiJson(path, options = {}) {
   return data;
 }
 
-export async function fetchData() {
-  const res = await fetch("/api/sales", { cache: "no-store" });
+export async function apiDownload(path, payload) {
+  const res = await fetch(path, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRF-Token": csrfToken,
+    },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || `HTTP ${res.status}`);
+  }
+  const blob = await res.blob();
+  const disposition = res.headers.get("Content-Disposition") || "";
+  const match = disposition.match(/filename="?([^"]+)"?/i);
+  return { blob, filename: match?.[1] || "ntec-report" };
+}
+
+export async function fetchData(range = state.range) {
+  const qs = rangeQueryString(range || {});
+  const res = await fetch(`/api/sales${qs}`, { cache: "no-store" });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
     const msg = body.error || `API ${res.status}`;

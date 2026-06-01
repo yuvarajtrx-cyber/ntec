@@ -2,9 +2,10 @@ import { state } from "./state.js";
 import { populateFilter, escapeHtml } from "./format.js";
 import { uniqueSorted } from "./rows.js";
 import { setMeta, setMetaError } from "./meta.js";
-import { apiJson, can, fetchData, loadSession, uploadFile } from "./api.js";
+import { apiJson, can, fetchData, loadSession, reloadData, uploadFile } from "./api.js";
 import { refreshFilterOptions, refreshProductFilterOptions } from "./filters.js";
 import { routeFromHash } from "./routing.js";
+import { RANGE_PRESETS, resolveRange } from "./data-range.js";
 import { renderHome, wireHome } from "./pages/home.js";
 import { renderAnalysis, wireAnalysis } from "./pages/analysis.js";
 import { renderKpi, wireKpi } from "./pages/kpi.js";
@@ -12,6 +13,7 @@ import { renderProducts, wireProducts } from "./pages/products.js";
 import { renderBrowse, wireBrowse } from "./pages/browse.js";
 import { renderSalesTeam, wireSalesTeam } from "./pages/sales-team.js";
 import { renderCustomers, wireCustomers } from "./pages/customers.js";
+import { renderQuality, wireQuality } from "./pages/quality.js";
 import { renderAdminPage, wireAdmin } from "./pages/admin.js";
 import { wireConfirm } from "./confirm.js";
 import { showToast } from "./toast.js";
@@ -27,6 +29,7 @@ const PAGE_PARTIALS = [
   "pages/sales-team.html",
   "pages/customers.html",
   "pages/browse.html",
+  "pages/quality.html",
   "pages/admin.html",
 ];
 const MODAL_PARTIALS = [
@@ -54,6 +57,45 @@ async function fetchPartial(path) {
   return res.text();
 }
 
+function injectRangeSelectors() {
+  // The selector lives in every page's topbar so it's always visible. Each
+  // copy stays in sync with the others through state.range and reloadData.
+  const options = RANGE_PRESETS
+    .map(p => `<option value="${p.value}">${p.label}</option>`)
+    .join("");
+  document.querySelectorAll(".topbar-right").forEach(host => {
+    const wrap = document.createElement("label");
+    wrap.className = "data-range-control";
+    wrap.title = "Limits how much data the page loads from the server";
+    wrap.innerHTML = `
+      <span class="data-range-label">Data range</span>
+      <select class="data-range-select">${options}</select>
+    `;
+    host.insertBefore(wrap, host.firstChild);
+  });
+}
+
+async function applyRangePreset(preset) {
+  const resolved = resolveRange(preset);
+  state.range = { preset, from: resolved.from, to: resolved.to };
+  document.querySelectorAll(".data-range-select").forEach(sel => {
+    if (sel.value !== preset) sel.value = preset;
+  });
+  document.body.classList.add("data-range-loading");
+  try {
+    await reloadData();
+  } finally {
+    document.body.classList.remove("data-range-loading");
+  }
+}
+
+function wireRangeSelectors() {
+  document.querySelectorAll(".data-range-select").forEach(sel => {
+    sel.value = state.range.preset;
+    sel.addEventListener("change", () => applyRangePreset(sel.value));
+  });
+}
+
 function wireShell() {
   const navPerms = {
     home: "page.home",
@@ -63,6 +105,7 @@ function wireShell() {
     "sales-team": "page.sales_team",
     customers: "page.customers",
     records: "page.records",
+    quality: "page.quality_tracker",
     admin: "admin.view",
   };
   document.querySelectorAll(".nav-link").forEach(btn => {
@@ -84,6 +127,7 @@ function wireShell() {
         v === "products"   ? "#/products"   :
         v === "sales-team" ? "#/sales-team" :
         v === "customers"  ? "#/customers"  :
+        v === "quality"    ? "#/quality"    :
         v === "admin"      ? "#/admin"      :
         "";
     });
@@ -165,8 +209,15 @@ function renderEmptyState(message) {
 async function init() {
   await loadSession();
   await loadPartials();
+  injectRangeSelectors();
+
+  // Resolve the default range BEFORE the first fetch so /api/sales gets
+  // explicit (from, to) instead of relying on server defaults.
+  const resolved = resolveRange(state.range.preset);
+  state.range = { ...state.range, from: resolved.from, to: resolved.to };
 
   wireShell();
+  wireRangeSelectors();
   wireBrowse();
   wireProducts();
   wireKpi();
@@ -174,6 +225,7 @@ async function init() {
   wireHome();
   wireSalesTeam();
   wireCustomers();
+  wireQuality();
   wireAdmin();
   wireConfirm();
 
@@ -204,6 +256,7 @@ async function init() {
   renderBrowse();
   renderSalesTeam();
   renderCustomers();
+  renderQuality();
   if (can("admin.view")) renderAdminPage();
   routeFromHash();
 }

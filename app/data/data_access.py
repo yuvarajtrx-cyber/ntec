@@ -1,10 +1,10 @@
 import pandas as pd
 from psycopg import sql
 
-import db
-from customers import customer_key_variants
-from text_utils import salesperson_canon
-from upload import LINE_ITEM_TABLE
+from app.data import db
+from app.domain.customers import customer_key_variants
+from app.ingest.text_utils import salesperson_canon
+from app.ingest.upload import LINE_ITEM_TABLE
 
 TABLE_NAME = "sales_register"
 SALESPERSON_TABLE = "customer_salesperson"
@@ -14,16 +14,32 @@ class DataSourceError(Exception):
     """Raised when the database is unreachable or returns no rows."""
 
 
-def from_db() -> pd.DataFrame:
+def from_db(date_from: str | None = None, date_to: str | None = None) -> pd.DataFrame:
+    # NOTE: TABLE_NAME is a trusted constant. We still avoid f-string interpolation
+    # in new code for defense-in-depth (see security review).
+    where_parts: list[str] = []
+    params: list = []
+    if date_from:
+        where_parts.append("voucher_date >= %s")
+        params.append(date_from)
+    if date_to:
+        where_parts.append("voucher_date <= %s")
+        params.append(date_to)
+    where_sql = (" WHERE " + " AND ".join(where_parts)) if where_parts else ""
+    query = f"SELECT * FROM {TABLE_NAME}{where_sql} ORDER BY voucher_date"
     try:
-        rows = db.fetch_all(f"SELECT * FROM {TABLE_NAME} ORDER BY voucher_date")
+        rows = db.fetch_all(query, tuple(params) if params else None)
     except Exception as e:
         raise DataSourceError(f"Could not fetch from Postgres: {e}") from e
 
     if not rows:
-        raise DataSourceError(
-            f"Table '{TABLE_NAME}' is empty. Use the Upload button to add data."
-        )
+        if not where_parts:
+            raise DataSourceError(
+                f"Table '{TABLE_NAME}' is empty. Use the Upload button to add data."
+            )
+        # Empty range is a valid state — return an empty frame with the columns
+        # downstream code expects so build_payload can short-circuit cleanly.
+        return pd.DataFrame()
 
     df = pd.DataFrame(rows)
     df["voucher_date"] = pd.to_datetime(df["voucher_date"])
@@ -33,6 +49,7 @@ def from_db() -> pd.DataFrame:
 def fetch_salesperson_map() -> dict[str, str]:
     """normalized customer_name -> sales_person."""
     try:
+        # NOTE: SALESPERSON_TABLE is a trusted constant (see security review)
         rows = db.fetch_all(f"SELECT customer_name, sales_person FROM {SALESPERSON_TABLE}")
     except Exception:
         return {}
@@ -56,12 +73,25 @@ def fetch_salesperson_map() -> dict[str, str]:
     return out
 
 
-def fetch_line_items() -> dict[str, list[dict]]:
-    """Return product line items grouped by voucher_no."""
+def fetch_line_items(voucher_nos: list[str] | None = None) -> dict[str, list[dict]]:
+    """Return product line items grouped by voucher_no.
+
+    If voucher_nos is provided, only fetch lines for those vouchers — saves a
+    full-table read when callers already know the in-scope voucher set.
+    """
+    if voucher_nos is not None and not voucher_nos:
+        return {}
+    where_sql = ""
+    params: tuple | None = None
+    if voucher_nos is not None:
+        where_sql = " WHERE voucher_no = ANY(%s)"
+        params = (voucher_nos,)
     try:
+        # NOTE: LINE_ITEM_TABLE is a trusted constant (see security review)
         rows = db.fetch_all(
             f"SELECT voucher_no, line_no, particulars, quantity, rate, value "
-            f"FROM {LINE_ITEM_TABLE} ORDER BY voucher_no, line_no"
+            f"FROM {LINE_ITEM_TABLE}{where_sql} ORDER BY voucher_no, line_no",
+            params,
         )
     except Exception:
         return {}
