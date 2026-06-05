@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from io import BytesIO
-from re import sub
+from re import fullmatch, sub
 from typing import Any
 
 from openpyxl import Workbook
@@ -17,6 +17,18 @@ def clean_text(value: Any) -> str:
     if value is None:
         return ""
     return str(value).strip()
+
+
+def excel_value(value: Any, *, plain_numbers: bool = False) -> Any:
+    if not isinstance(value, str):
+        return value
+    match = fullmatch(r"\s*([+-]?)\s*(₹?)\s*([\d,]+(?:\.\d+)?)\s*(%?)\s*", value)
+    if not match:
+        return value
+    if not plain_numbers and not (match.group(2) or match.group(4)):
+        return value
+    number = float(f"{match.group(1)}{match.group(3).replace(',', '')}")
+    return int(number) if number.is_integer() else number
 
 
 def safe_filename(value: str, ext: str) -> str:
@@ -95,7 +107,7 @@ def build_excel_report(payload: dict) -> BytesIO:
         ws.append(["Summary"])
         ws[ws.max_row][0].font = Font(bold=True)
         for label, value in summary:
-            ws.append([label, value])
+            ws.append([label, excel_value(value, plain_numbers=True)])
 
     for col in range(1, 4):
         ws.column_dimensions[get_column_letter(col)].width = 28
@@ -123,7 +135,7 @@ def build_excel_report(payload: dict) -> BytesIO:
         for row in rows[:MAX_EXPORT_ROWS]:
             if not isinstance(row, dict):
                 continue
-            sheet.append([row.get(c.get("key")) for c in columns])
+            sheet.append([excel_value(row.get(c.get("key"))) for c in columns])
 
         for col_idx, column in enumerate(columns, start=1):
             label = clean_text(column.get("label")) or clean_text(column.get("key"))

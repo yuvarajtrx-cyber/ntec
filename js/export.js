@@ -31,11 +31,18 @@ export function salesRows(rows) {
   }));
 }
 
+function numericExportValue(value) {
+  const text = String(value ?? "").trim();
+  const match = text.match(/^([+-]?)\s*₹?\s*([\d,]+(?:\.\d+)?)\s*%?$/);
+  if (!match) return value;
+  return Number(`${match[1]}${match[2].replace(/,/g, "")}`);
+}
+
 export function summaryFromCards(selector) {
   return [...document.querySelectorAll(`${selector} .insight-card`)].map(card => ({
     label: card.querySelector("span")?.textContent?.trim() || "",
-    value: card.querySelector("strong")?.textContent?.trim() || "",
-  })).filter(item => item.label && item.value);
+    value: numericExportValue(card.querySelector("strong")?.textContent?.trim() || ""),
+  })).filter(item => item.label && item.value !== "");
 }
 
 export function filtersFromControls(items) {
@@ -65,7 +72,8 @@ export function tableSectionFromDom(title, tableId) {
     .map(tr => {
       const row = {};
       [...tr.children].slice(0, headers.length).forEach((td, idx) => {
-        row[`c${idx}`] = td.textContent.trim().replace(/\s+/g, " ");
+        const value = td.textContent.trim().replace(/\s+/g, " ");
+        row[`c${idx}`] = td.classList.contains("num") ? numericExportValue(value) : value;
       });
       return row;
     });
